@@ -11,6 +11,9 @@
     "ios": {
       "supportsTablet": true
     },
+    "extra" : {
+      "API_URl" : "http://localhost:8080"
+    },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
