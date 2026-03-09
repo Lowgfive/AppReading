@@ -1,142 +1,252 @@
-import { Button, StyleSheet, Text, TextInput, View } from "react-native";
-import { router } from 'expo-router'
-import { BookOpen } from "lucide-react-native";
-import { useState } from "react";
+import React, { useState } from 'react';
+import { View, Text, TextInput, Pressable, StyleSheet, SafeAreaView, Alert, ScrollView } from 'react-native';
+import { useRouter } from 'expo-router';
+import { User, Mail, Lock, Eye, EyeOff, BookOpen } from 'lucide-react-native';
+import { AuthService } from '../../services/auth.service';
 
-import  {AuthService}  from "@/services/auth.service";
-
-export const API_URL = process.env.EXPO_PUBLIC_API_URL;
-export default function LoginScreen() {
-    const [email, setEmail] = useState<string>("")
-    const [password, setPassword] = useState<string>("")
-    const [username, setUsername] = useState<string>("")
-
+export default function RegisterScreen() {
+    const router = useRouter();
+    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    const registerUser = async () => {
-        if (!username || !email || !password) {
-            alert("Please fill in all fields");
+    const handleRegister = async () => {
+        if (!username || !email || !password || !confirmPassword) {
+            Alert.alert("Error", "Please fill in all fields");
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            Alert.alert("Error", "Passwords do not match");
             return;
         }
 
         setLoading(true);
         try {
             await AuthService.register(username, email, password);
-            alert("Registration successful! Please login.")
-            router.push('/(auth)/login');
+            // Wait shortly to let user see success, then navigate 
+            Alert.alert("Success", "Account created successfully", [
+                { text: "OK", onPress: () => router.push('/(auth)/login') }
+            ]);
         } catch (error: any) {
-            console.log(error)
-            alert(error.response?.data?.message || "Registration failed");
+            Alert.alert("Registration Failed", error.message || "An error occurred");
         } finally {
             setLoading(false);
         }
-    }
+    };
 
     return (
-        <View style={styles.container}>
-            <View style={styles.logoWrap}>
-                <BookOpen size={40} />
-                <Text style={styles.logoText}>Storytime</Text>
-            </View>
-
-            <View style={styles.header}>
-                <Text style={styles.title}>Welcome</Text>
-                <Text style={styles.subtitle}>
-                    Sign up to continue your reading journey
-                </Text>
-            </View>
-
-            <View style={styles.form}>
-                <View style={styles.field}>
-                    <Text style={styles.label}>Username</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Enter your name"
-                        onChangeText={(text) => setUsername(text)}
-                    />
-                </View>
-                <View style={styles.field}>
-                    <Text style={styles.label}>Email</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Enter your email"
-                        onChangeText={(text) => setEmail(text)}
-                    />
-                </View>
-
-                <View style={styles.field}>
-                    <View style={styles.rowBetween}>
-                        <Text style={styles.label}>Password</Text>
+        <SafeAreaView style={styles.container}>
+            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                <View style={styles.content}>
+                    <View style={styles.headerContainer}>
+                        <View style={styles.logoContainer}>
+                            <BookOpen size={32} color="#EFA02A" />
+                            <Text style={styles.logoText}>Storytime</Text>
+                        </View>
+                        <Text style={styles.title}>Create Account</Text>
+                        <Text style={styles.subtitle}>Join our community of story lovers</Text>
                     </View>
-                    <TextInput
-                        style={styles.input}
-                        secureTextEntry
-                        placeholder="Enter your password"
-                        onChangeText={(text) => setPassword(text)}
-                    />
+
+                    <View style={styles.card}>
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Username</Text>
+                            <View style={styles.inputWrapper}>
+                                <User size={20} color="#9CA3AF" style={styles.inputIcon} />
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Choose a username"
+                                    placeholderTextColor="#6B7280"
+                                    autoCapitalize="none"
+                                    value={username}
+                                    onChangeText={setUsername}
+                                />
+                            </View>
+                        </View>
+
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Email</Text>
+                            <View style={styles.inputWrapper}>
+                                <Mail size={20} color="#9CA3AF" style={styles.inputIcon} />
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Enter your email"
+                                    placeholderTextColor="#6B7280"
+                                    keyboardType="email-address"
+                                    autoCapitalize="none"
+                                    value={email}
+                                    onChangeText={setEmail}
+                                />
+                            </View>
+                        </View>
+
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Password</Text>
+                            <View style={styles.inputWrapper}>
+                                <Lock size={20} color="#9CA3AF" style={styles.inputIcon} />
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Create a password"
+                                    placeholderTextColor="#6B7280"
+                                    secureTextEntry={!showPassword}
+                                    value={password}
+                                    onChangeText={setPassword}
+                                />
+                                <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                                    {showPassword ? (
+                                        <Eye size={20} color="#9CA3AF" />
+                                    ) : (
+                                        <EyeOff size={20} color="#9CA3AF" />
+                                    )}
+                                </Pressable>
+                            </View>
+                        </View>
+
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Confirm Password</Text>
+                            <View style={styles.inputWrapper}>
+                                <Lock size={20} color="#9CA3AF" style={styles.inputIcon} />
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Confirm your password"
+                                    placeholderTextColor="#6B7280"
+                                    secureTextEntry={!showPassword}
+                                    value={confirmPassword}
+                                    onChangeText={setConfirmPassword}
+                                />
+                            </View>
+                        </View>
+
+                        <Pressable
+                            style={[styles.button, loading && styles.buttonDisabled]}
+                            onPress={handleRegister}
+                            disabled={loading}
+                        >
+                            <Text style={styles.buttonText}>{loading ? 'Creating...' : 'Create Account'}</Text>
+                        </Pressable>
+
+                        <View style={styles.footer}>
+                            <Text style={styles.footerText}>Already have an account? </Text>
+                            <Pressable onPress={() => router.push('/(auth)/login')}>
+                                <Text style={styles.footerLink}>Sign in</Text>
+                            </Pressable>
+                        </View>
+                    </View>
                 </View>
-                <View>
-                    <Text onPress={() => { router.push('/(auth)/login') }}>Have a account!</Text>
-                </View>
-                <Button title={loading ? "Registering..." : "Register"} onPress={registerUser} disabled={loading} />
-            </View>
-        </View>
-    )
+            </ScrollView>
+        </SafeAreaView>
+    );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#fff",
-        padding: 24,
-        justifyContent: "center",
+        backgroundColor: '#121212',
     },
-    logoWrap: {
-        alignItems: "center",
-        marginBottom: 32,
+    scrollContent: {
+        flexGrow: 1,
     },
-    logoText: {
-        fontSize: 22,
-        fontWeight: "700",
-        marginTop: 8,
+    content: {
+        flex: 1,
+        paddingHorizontal: 24,
+        justifyContent: 'center',
+        paddingVertical: 40,
     },
-    header: {
+    headerContainer: {
+        alignItems: 'center',
+        marginBottom: 40,
+    },
+    logoContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
         marginBottom: 24,
     },
+    logoText: {
+        color: '#FFFFFF',
+        fontSize: 28,
+        fontWeight: '700',
+        marginLeft: 8,
+        fontFamily: 'serif',
+    },
     title: {
+        color: '#FFFFFF',
         fontSize: 26,
-        fontWeight: "700",
-        marginBottom: 4,
+        fontWeight: '600',
+        marginBottom: 8,
+        fontFamily: 'serif',
     },
     subtitle: {
+        color: '#9CA3AF',
         fontSize: 14,
-        color: "#666",
     },
-    form: {
-        gap: 20,
+    card: {
+        backgroundColor: '#1A1A1A',
+        borderRadius: 16,
+        padding: 24,
+        borderWidth: 1,
+        borderColor: '#333333',
     },
-    field: {
-        gap: 6,
+    inputContainer: {
+        marginBottom: 20,
     },
     label: {
+        color: '#FFFFFF',
         fontSize: 14,
-        fontWeight: "600",
+        fontWeight: '500',
+        marginBottom: 8,
+    },
+    inputWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#121212',
+        borderWidth: 1,
+        borderColor: '#333333',
+        borderRadius: 8,
+        height: 50,
+        paddingHorizontal: 12,
+    },
+    inputIcon: {
+        marginRight: 12,
     },
     input: {
-        borderWidth: 1,
-        borderColor: "#ddd",
-        borderRadius: 10,
-        paddingHorizontal: 14,
-        paddingVertical: 12,
+        flex: 1,
+        color: '#FFFFFF',
+        fontSize: 15,
+    },
+    eyeIcon: {
+        padding: 8,
+    },
+    button: {
+        backgroundColor: '#EFA02A',
+        borderRadius: 8,
+        height: 50,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 10,
+    },
+    buttonDisabled: {
+        opacity: 0.7,
+    },
+    buttonText: {
+        color: '#121212',
         fontSize: 16,
+        fontWeight: '600',
     },
-    rowBetween: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
+    footer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        marginTop: 24,
     },
-    forgot: {
-        fontSize: 13,
-        color: "#4F46E5",
+    footerText: {
+        color: '#9CA3AF',
+        fontSize: 14,
     },
+    footerLink: {
+        color: '#EFA02A',
+        fontSize: 14,
+        fontWeight: '500',
+    }
 });
