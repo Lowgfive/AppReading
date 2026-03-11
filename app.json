@@ -11,8 +11,8 @@
     "ios": {
       "supportsTablet": true
     },
-    "extra" : {
-      "API_URl" : "http://localhost:8080"
+    "extra": {
+      "API_URl": "http://localhost:8080"
     },
     "android": {
       "adaptiveIcon": {
@@ -41,7 +41,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,

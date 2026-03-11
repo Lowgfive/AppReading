@@ -12,8 +12,7 @@ export const AppService = {
     },
     async likeStories(storyId: string) {
         const token = await AuthService.getToken();
-        console.log(token)
-        await axios.post(`${API_URL}/toggle-like`, {
+        const response = await axios.post(`${API_URL}/stories/like`, {
             storyId
         },
             {
@@ -21,14 +20,47 @@ export const AppService = {
                     Authorization: `Bearer ${token}`
                 }
             }
-        )
+        );
+        return response.data;
     },
     async getStoryChapters(storyId: string) {
-        const res = await axios.get(`${API_URL}/chapters/${storyId}/list`);
+        const token = await AuthService.getToken();
+        
+        const res = await axios.get(`${API_URL}/chapters/${storyId}/list`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
         return res.data;
     },
     async getChapterContent(storyId: string, chapterNumber: number) {
-        const res = await axios.get(`${API_URL}/chapters/${storyId}/read/${chapterNumber}`);
+        let token = null;
+        try {
+            token = await AuthService.getToken();
+        } catch (e) {
+            console.log("No token found, proceeding as guest.");
+        }
+        
+        const headers: Record<string, string> = {};
+        if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+        
+        const res = await axios.get(`${API_URL}/chapters/${storyId}/read/${chapterNumber}`, {
+            headers
+        });
         return res.data;
-    }
+    },
+    async getLikedStories() {
+        const token = await AuthService.getToken();
+        const res = await axios.get(`${API_URL}/stories/getLikeStory`, {
+             headers: { Authorization: `Bearer ${token}` }
+        });
+        return res.data;
+    },
+    async getLibrary() {
+        const token = await AuthService.getToken();
+        const res = await axios.get(`${API_URL}/reading-history/library`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return res.data;
+    },
 }

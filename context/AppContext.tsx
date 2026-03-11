@@ -18,9 +18,10 @@ export default function AppProvider({ children }: PropsWithChildren) {
     
     const data = async () => {
         try {
-            const data = await AppService.data();
-            setDataStory(data.story);
-            
+            const data: any = await AppService.data();
+            if (data && data.story) {
+                setDataStory(data.story);
+            }
         } catch (error) {
 
         }

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, SafeAreaView, Alert, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { User, Mail, Lock, Eye, EyeOff, BookOpen } from 'lucide-react-native';
+import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { AuthService } from '../../services/auth.service';
+import AppHeader from '@/components/AppHeader';
 
 export default function RegisterScreen() {
     const router = useRouter();
@@ -40,17 +41,9 @@ export default function RegisterScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
+            <AppHeader />
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <View style={styles.content}>
-                    <View style={styles.headerContainer}>
-                        <View style={styles.logoContainer}>
-                            <BookOpen size={32} color="#EFA02A" />
-                            <Text style={styles.logoText}>Storytime</Text>
-                        </View>
-                        <Text style={styles.title}>Create Account</Text>
-                        <Text style={styles.subtitle}>Join our community of story lovers</Text>
-                    </View>
-
                     <View style={styles.card}>
                         <View style={styles.inputContainer}>
                             <Text style={styles.label}>Username</Text>

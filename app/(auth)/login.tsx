@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, SafeAreaView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Mail, Lock, Eye, EyeOff, BookOpen } from 'lucide-react-native';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { AuthService } from '../../services/auth.service';
+import { useAuth } from '@/context/AuthContext';
+import AppHeader from '@/components/AppHeader';
 
 export default function LoginScreen() {
     const router = useRouter();
+    const { signIn } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -19,8 +22,8 @@ export default function LoginScreen() {
 
         setLoading(true);
         try {
-            await AuthService.login(email, password);
-            router.replace('/(tabs)/home');
+            const data = await AuthService.login(email, password);
+            await signIn(data.token);
         } catch (error: any) {
             Alert.alert("Login Failed", error.message || "Invalid credentials");
         } finally {
@@ -30,17 +33,8 @@ export default function LoginScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
+            <AppHeader />
             <View style={styles.content}>
-                {/* Header Section */}
-                <View style={styles.headerContainer}>
-                    <View style={styles.logoContainer}>
-                        <BookOpen size={32} color="#EFA02A" />
-                        <Text style={styles.logoText}>Storytime</Text>
-                    </View>
-                    <Text style={styles.title}>Welcome Back</Text>
-                    <Text style={styles.subtitle}>Sign in to continue your reading journey</Text>
-                </View>
-
                 {/* Form Card */}
                 <View style={styles.card}>
                     <View style={styles.inputContainer}>

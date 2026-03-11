@@ -17,7 +17,11 @@ module.exports = {
 
       fontFamily: {
         serifClassic: ["Georgia", "Times New Roman", "serif"],
-        reading: ["Merriweather", "Georgia", "serif"]
+        reading: ["Merriweather", "Georgia", "serif"],
+        inter: ["Inter_400Regular", "sans-serif"],
+        interMedium: ["Inter_500Medium", "sans-serif"],
+        interSemiBold: ["Inter_600SemiBold", "sans-serif"],
+        interBold: ["Inter_700Bold", "sans-serif"],
       },
 
       fontSize: {

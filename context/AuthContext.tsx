@@ -49,7 +49,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
     const signOut = async () => {
         await AuthService.logout();
         setUser(null);
-        router.replace('/(auth)/login');
+        router.replace('/(tabs)/home');
     };
 
     return (

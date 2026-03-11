@@ -1,5 +1,3 @@
-
-import * as SecureStore from 'expo-secure-store';
 import { Storage } from '../context/wrapper'
 import axios from 'axios';
 
@@ -27,5 +25,13 @@ export const AuthService = {
 
     async getToken() {
         return await Storage.getItem(TOKEN_KEY);
+    },
+
+    async getProfile() {
+        const token = await Storage.getItem(TOKEN_KEY);
+        const response = await axios.get(`${API_URL}/auth/profile`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
     }
 };
