@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, TextInput, ActivityIndicator } from "react-native";
+import React, { useEffect, useState, useRef } from "react";
+import { View, Text, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Animated } from "react-native";
 import { useAuth } from "@/context/AuthContext";
 import { AppService } from "@/services/app.service";
 import { router } from "expo-router";
@@ -7,12 +7,14 @@ import { BookOpen, Sun, Moon, Menu, Search, Sparkles, Heart } from "lucide-react
 import SideMenu from "@/components/SideMenu";
 import { useTheme } from "@/context/ThemeContext";
 import StoryCard from "@/components/StoryCard";
+import SkeletonStoryCard from "@/components/SkeletonStoryCard";
 import AppHeader from "@/components/AppHeader";
 
 export default function HomeScreen() {
     const { user, signOut } = useAuth();
     const { toggleTheme, isDarkMode, colors } = useTheme();
     const [loading, setLoading] = useState(true);
+    const skeletonOpacity = useRef(new Animated.Value(1)).current;
     const [homeData, setHomeData] = useState<any>(null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -29,6 +31,12 @@ export default function HomeScreen() {
             console.error("Error fetching home data:", error);
         } finally {
             setLoading(false);
+            // fade out skeleton
+            Animated.timing(skeletonOpacity, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+            }).start();
         }
     };
 
@@ -49,7 +57,7 @@ export default function HomeScreen() {
                             {title}
                         </Text>
                     </View>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => router.push("/(tabs)/search") }>
                         <Text className="text-sm font-inter" style={{ color: colors.iconMuted }}>Xem Tất Cả &gt;</Text>
                     </TouchableOpacity>
                 </View>
@@ -98,9 +106,13 @@ export default function HomeScreen() {
                 </View>
 
                 {loading ? (
-                    <View className="py-10">
-                        <ActivityIndicator size="large" color={colors.accent} />
-                    </View>
+                    <Animated.View style={{ opacity: skeletonOpacity }}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-6">
+                            {[...Array(4)].map((_, i) => (
+                                <SkeletonStoryCard key={i} />
+                            ))}
+                        </ScrollView>
+                    </Animated.View>
                 ) : (
                     <View>
                         {renderStorySection("Đề Cử Cho Bạn", <Sparkles color={colors.accent} size={22} />, recommended)}

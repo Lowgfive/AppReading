@@ -13,6 +13,7 @@ export default function RegisterScreen() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [formReady, setFormReady] = useState(false);
 
     const handleRegister = async () => {
         if (!username || !email || !password || !confirmPassword) {
@@ -39,95 +40,109 @@ export default function RegisterScreen() {
         }
     };
 
+    React.useEffect(() => {
+        const t = setTimeout(() => setFormReady(true), 500);
+        return () => clearTimeout(t);
+    }, []);
+
     return (
         <SafeAreaView style={styles.container}>
             <AppHeader />
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <View style={styles.content}>
-                    <View style={styles.card}>
-                        <View style={styles.inputContainer}>
-                            <Text style={styles.label}>Username</Text>
-                            <View style={styles.inputWrapper}>
-                                <User size={20} color="#9CA3AF" style={styles.inputIcon} />
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Choose a username"
-                                    placeholderTextColor="#6B7280"
-                                    autoCapitalize="none"
-                                    value={username}
-                                    onChangeText={setUsername}
-                                />
+                    {formReady ? (
+                        <View style={styles.card}>
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.label}>Username</Text>
+                                <View style={styles.inputWrapper}>
+                                    <User size={20} color="#9CA3AF" style={styles.inputIcon} />
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Choose a username"
+                                        placeholderTextColor="#6B7280"
+                                        autoCapitalize="none"
+                                        value={username}
+                                        onChangeText={setUsername}
+                                    />
+                                </View>
                             </View>
-                        </View>
 
-                        <View style={styles.inputContainer}>
-                            <Text style={styles.label}>Email</Text>
-                            <View style={styles.inputWrapper}>
-                                <Mail size={20} color="#9CA3AF" style={styles.inputIcon} />
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Enter your email"
-                                    placeholderTextColor="#6B7280"
-                                    keyboardType="email-address"
-                                    autoCapitalize="none"
-                                    value={email}
-                                    onChangeText={setEmail}
-                                />
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.label}>Email</Text>
+                                <View style={styles.inputWrapper}>
+                                    <Mail size={20} color="#9CA3AF" style={styles.inputIcon} />
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Enter your email"
+                                        placeholderTextColor="#6B7280"
+                                        keyboardType="email-address"
+                                        autoCapitalize="none"
+                                        value={email}
+                                        onChangeText={setEmail}
+                                    />
+                                </View>
                             </View>
-                        </View>
 
-                        <View style={styles.inputContainer}>
-                            <Text style={styles.label}>Password</Text>
-                            <View style={styles.inputWrapper}>
-                                <Lock size={20} color="#9CA3AF" style={styles.inputIcon} />
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Create a password"
-                                    placeholderTextColor="#6B7280"
-                                    secureTextEntry={!showPassword}
-                                    value={password}
-                                    onChangeText={setPassword}
-                                />
-                                <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                                    {showPassword ? (
-                                        <Eye size={20} color="#9CA3AF" />
-                                    ) : (
-                                        <EyeOff size={20} color="#9CA3AF" />
-                                    )}
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.label}>Password</Text>
+                                <View style={styles.inputWrapper}>
+                                    <Lock size={20} color="#9CA3AF" style={styles.inputIcon} />
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Create a password"
+                                        placeholderTextColor="#6B7280"
+                                        secureTextEntry={!showPassword}
+                                        value={password}
+                                        onChangeText={setPassword}
+                                    />
+                                    <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                                        {showPassword ? (
+                                            <Eye size={20} color="#9CA3AF" />
+                                        ) : (
+                                            <EyeOff size={20} color="#9CA3AF" />
+                                        )}
+                                    </Pressable>
+                                </View>
+                            </View>
+
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.label}>Confirm Password</Text>
+                                <View style={styles.inputWrapper}>
+                                    <Lock size={20} color="#9CA3AF" style={styles.inputIcon} />
+                                    <TextInput
+                                        style={styles.input}
+                                        placeholder="Confirm your password"
+                                        placeholderTextColor="#6B7280"
+                                        secureTextEntry={!showPassword}
+                                        value={confirmPassword}
+                                        onChangeText={setConfirmPassword}
+                                    />
+                                </View>
+                            </View>
+
+                            <Pressable
+                                style={[styles.button, loading && styles.buttonDisabled]}
+                                onPress={handleRegister}
+                                disabled={loading}
+                            >
+                                <Text style={styles.buttonText}>{loading ? 'Creating...' : 'Create Account'}</Text>
+                            </Pressable>
+
+                            <View style={styles.footer}>
+                                <Text style={styles.footerText}>Already have an account? </Text>
+                                <Pressable onPress={() => router.push('/(auth)/login')}>
+                                    <Text style={styles.footerLink}>Sign in</Text>
                                 </Pressable>
                             </View>
                         </View>
-
-                        <View style={styles.inputContainer}>
-                            <Text style={styles.label}>Confirm Password</Text>
-                            <View style={styles.inputWrapper}>
-                                <Lock size={20} color="#9CA3AF" style={styles.inputIcon} />
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Confirm your password"
-                                    placeholderTextColor="#6B7280"
-                                    secureTextEntry={!showPassword}
-                                    value={confirmPassword}
-                                    onChangeText={setConfirmPassword}
-                                />
-                            </View>
+                    ) : (
+                        <View style={[styles.card, { padding: 24 }]}>                        
+                            <View style={{ height: 20, backgroundColor: '#333', borderRadius: 4, marginBottom: 20 }} />
+                            <View style={{ height: 20, backgroundColor: '#333', borderRadius: 4, marginBottom: 20 }} />
+                            <View style={{ height: 20, backgroundColor: '#333', borderRadius: 4, marginBottom: 20 }} />
+                            <View style={{ height: 50, backgroundColor: '#333', borderRadius: 8 }} />
                         </View>
-
-                        <Pressable
-                            style={[styles.button, loading && styles.buttonDisabled]}
-                            onPress={handleRegister}
-                            disabled={loading}
-                        >
-                            <Text style={styles.buttonText}>{loading ? 'Creating...' : 'Create Account'}</Text>
-                        </Pressable>
-
-                        <View style={styles.footer}>
-                            <Text style={styles.footerText}>Already have an account? </Text>
-                            <Pressable onPress={() => router.push('/(auth)/login')}>
-                                <Text style={styles.footerLink}>Sign in</Text>
-                            </Pressable>
-                        </View>
-                    </View>
+                    )}
                 </View>
             </ScrollView>
         </SafeAreaView>

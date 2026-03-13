@@ -1,20 +1,25 @@
 import { AppService } from "@/services/app.service";
 import { Story } from "@/types/story.type";
 import { createContext, PropsWithChildren, useEffect, useState } from "react";
+import { useAuth } from "./AuthContext";
 
 type AppContextType = {
     openLogin: boolean | null;
     setOpenLogin: React.Dispatch<React.SetStateAction<boolean | null>>
     dataStory: Array<Story>
     setDataStory : React.Dispatch<React.SetStateAction<Array<Story>>>
+    balance: number | null;
+    setBalance: React.Dispatch<React.SetStateAction<number | null>>;
 }
 
 export const AppContext = createContext<AppContextType | null>(null);
 
 export default function AppProvider({ children }: PropsWithChildren) {
+    const { user } = useAuth();
 
     const [openLogin, setOpenLogin] = useState<boolean | null>(false)
     const [dataStory, setDataStory] = useState<Array<Story>>([]);
+    const [balance, setBalance] = useState<number | null>(null);
     
     const data = async () => {
         try {
@@ -27,11 +32,29 @@ export default function AppProvider({ children }: PropsWithChildren) {
         }
     }
 
+    const fetchBalance = async () => {
+        if (user) {
+            try {
+                const res = await AppService.getBalance();
+                setBalance(res.balance);
+            } catch (error) {
+                console.error("Error fetching balance:", error);
+            }
+        } else {
+            setBalance(null);
+        }
+    };
+
     useEffect(() => {
         data();
     }, [])
+
+    useEffect(() => {
+        fetchBalance();
+    }, [user]);
+
     return (
-        <AppContext.Provider value={{ openLogin, setOpenLogin, dataStory , setDataStory}}>
+        <AppContext.Provider value={{ openLogin, setOpenLogin, dataStory , setDataStory, balance, setBalance}}>
             {children}
         </AppContext.Provider>
     )

@@ -8,6 +8,11 @@ export const AppService = {
         const res = await axios.get(`${API_URL}/stories/home`);
         return res.data;
     },
+    async searchStories(params: Record<string, any>) {
+        const query = new URLSearchParams(params as any).toString();
+        const res = await axios.get(`${API_URL}/stories?${query}`);
+        return res.data;
+    },
     async data() {
     },
     async likeStories(storyId: string) {
@@ -63,4 +68,12 @@ export const AppService = {
         });
         return res.data;
     },
+    async getBalance() {
+        const token = await AuthService.getToken();
+        if (!token) return null;
+        const res = await axios.get(`${API_URL}/money/balance`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return res.data;
+    }
 }

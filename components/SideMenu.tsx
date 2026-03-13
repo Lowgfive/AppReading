@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, Modal, Animated, Dimensions, TouchableWithoutFeedback, StyleSheet } from 'react-native';
-import { BookOpen, Sun, X, Home, Search as SearchIcon, Library, User } from 'lucide-react-native';
+import { BookOpen, Sun, Moon, X, Home, Search as SearchIcon, Library, User } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { AuthService } from '@/services/auth.service';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 
 const { height } = Dimensions.get('window');
 const MENU_HEIGHT = height * 0.5; // Chiếm 50% chiều dài màn hình
@@ -17,6 +18,7 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
     const slideAnim = useRef(new Animated.Value(-MENU_HEIGHT)).current;
     const router = useRouter();
     const { signOut } = useAuth();
+    const { colors, toggleTheme, isDarkMode } = useTheme();
     const [token, setToken] = useState<string | null>(null);
     const [isVisible, setIsVisible] = useState(isOpen);
 
@@ -80,50 +82,55 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
 
             {/* Slide-out panel */}
             <Animated.View
-                style={[{ transform: [{ translateY: slideAnim }], width: '100%' }, styles.panel]}
+                style={[{ transform: [{ translateY: slideAnim }], width: '100%' }, styles.panel, { backgroundColor: colors.card }]}
             >
                 {/* Header Section */}
                 <View className="flex-row justify-between items-center mb-8">
                     <View className="flex-row items-center gap-2">
-                        <BookOpen color="#E08A2A" size={24} />
-                        <Text className="text-white font-serifClassic text-lg font-bold pt-1">Storytime</Text>
+                        <BookOpen color={colors.accent} size={24} />
+                        <Text className="font-serifClassic text-lg font-bold pt-1" style={{ color: colors.text }}>Storytime</Text>
                     </View>
                     <View className="flex-row items-center gap-3">
-                        <TouchableOpacity>
-                            <Sun color="#A0A0A0" size={20} />
+                        <TouchableOpacity onPress={toggleTheme}>
+                            {isDarkMode ? (
+                                <Sun color={colors.icon} size={20} />
+                            ) : (
+                                <Moon color={colors.icon} size={20} />
+                            )}
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={onClose} className="p-1 rounded-lg border border-[#E08A2A]">
-                            <X color="#A0A0A0" size={20} />
+                        <TouchableOpacity onPress={onClose} className="p-1 rounded-lg" style={{ borderColor: colors.accent, borderWidth: 1 }}>
+                            <X color={colors.icon} size={20} />
                         </TouchableOpacity>
                     </View>
                 </View>
 
                 {/* Menu Items */}
                 <View className="gap-2 mb-8">
-                    <TouchableOpacity onPress={() => handleNavigation('/(tabs)/home')} className="flex-row items-center gap-4 bg-[#2A2A2A] p-3 rounded-xl">
-                        <Home color="#FFFFFF" size={20} />
-                        <Text className="text-white text-base font-serifClassic font-medium pt-1">Home</Text>
+                    <TouchableOpacity onPress={() => handleNavigation('/(tabs)/home')} className="flex-row items-center gap-4 p-3 rounded-xl" style={{ backgroundColor: colors.card }}>
+                        <Home color={colors.icon} size={20} />
+                        <Text className="text-base font-serifClassic font-medium pt-1" style={{ color: colors.text }}>Home</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleNavigation('/(tabs)/search')} className="flex-row items-center gap-4 p-3 rounded-xl">
-                        <SearchIcon color="#A0A0A0" size={20} />
-                        <Text className="text-white text-base font-serifClassic font-medium pt-1">Search</Text>
+                    <TouchableOpacity onPress={() => handleNavigation('/(tabs)/search')} className="flex-row items-center gap-4 p-3 rounded-xl" style={{ backgroundColor: colors.card }}>
+                        <SearchIcon color={colors.iconMuted} size={20} />
+                        <Text className="text-base font-serifClassic font-medium pt-1" style={{ color: colors.text }}>Search</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleNavigation('/(tabs)/library')} className="flex-row items-center gap-4 p-3 rounded-xl">
-                        <Library color="#A0A0A0" size={20} />
-                        <Text className="text-white text-base font-serifClassic font-medium pt-1">Library</Text>
+                    <TouchableOpacity onPress={() => handleNavigation('/(tabs)/library')} className="flex-row items-center gap-4 p-3 rounded-xl" style={{ backgroundColor: colors.card }}>
+                        <Library color={colors.iconMuted} size={20} />
+                        <Text className="text-base font-serifClassic font-medium pt-1" style={{ color: colors.text }}>Library</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleNavigation('/(tabs)/profile')} className="flex-row items-center gap-4 p-3 rounded-xl">
-                        <User color="#A0A0A0" size={20} />
-                        <Text className="text-white text-base font-serifClassic font-medium pt-1">Profile</Text>
+                    <TouchableOpacity onPress={() => handleNavigation('/(tabs)/profile')} className="flex-row items-center gap-4 p-3 rounded-xl" style={{ backgroundColor: colors.card }}>
+                        <User color={colors.iconMuted} size={20} />
+                        <Text className="text-base font-serifClassic font-medium pt-1" style={{ color: colors.text }}>Profile</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* Sign In / Sign Out Button */}
                 <TouchableOpacity
                     onPress={handleAuthAction}
-                    className="bg-[#E08A2A] py-3.5 rounded-xl items-center shadow-md"
+                    className="py-3.5 rounded-xl items-center shadow-md"
+                    style={{ backgroundColor: colors.accent }}
                 >
-                    <Text className="text-[#121212] font-bold font-serifClassic text-base">{token ? 'Sign Out' : 'Sign In'}</Text>
+                    <Text className="font-bold font-serifClassic text-base" style={{ color: colors.background }}>{token ? 'Sign Out' : 'Sign In'}</Text>
                 </TouchableOpacity>
 
             </Animated.View>
@@ -145,7 +152,6 @@ const styles = StyleSheet.create({
         top: 0,
         left: 0,
         right: 0,
-        backgroundColor: '#1E1E1E',
         borderBottomLeftRadius: 24,
         borderBottomRightRadius: 24,
         paddingTop: 56, // Padding cho tai thỏ/status bar

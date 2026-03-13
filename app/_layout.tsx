@@ -34,10 +34,10 @@ export default function Layout() {
             <AuthProvider>
                 <AppProvider>
                     <AuthFormProvider>
-                        <Stack screenOptions={{ headerShown: false }} />
+                        <Stack screenOptions={{ headerShown: false, animation: 'fade' }} />
                     </AuthFormProvider>
                 </AppProvider>
             </AuthProvider>
         </ThemeProvider>
     );
-}
+}

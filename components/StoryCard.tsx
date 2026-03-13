@@ -27,14 +27,14 @@ export default function StoryCard({ story, onPress }: StoryCardProps) {
                 style={{ backgroundColor: colors.cardImage }}
             >
                 {story.image ? (
-                    <ImageBackground source={{ uri: story.image }} className="w-full h-full" resizeMode="cover">
+                    <ImageBackground source={{ uri: story.image }} className="w-full h-full" resizeMode="cover" progressiveRenderingEnabled>
                         <LinearGradient
                             colors={['rgba(0,0,0,0.6)', 'transparent', 'rgba(0,0,0,0.8)']}
                             className="w-full h-full p-2 justify-between"
                         >
-                            <View className="self-start px-3 py-1 rounded-full border border-gray-700" style={{ backgroundColor: 'rgba(18,18,18,0.9)' }}>
+                            <View className="self-start px-3 py-1 rounded-full" style={{ backgroundColor: story.status === 'COMPLETED' || story.status === 'Completed' ? '#38A169' : '#E08A2A' }}>
                                 <Text className="text-gray-200 text-[10px] font-bold font-inter">
-                                    {story.status === 'COMPLETED' ? 'Completed' : 'Ongoing'}
+                                    {story.status === 'Completed' || story.status === 'COMPLETED' ? 'Completed' : 'Ongoing'}
                                 </Text>
                             </View>
                             <View className="mt-auto items-start">
@@ -48,9 +48,9 @@ export default function StoryCard({ story, onPress }: StoryCardProps) {
                     </ImageBackground>
                 ) : (
                     <View className="w-full h-full justify-between p-2" style={{ backgroundColor: colors.cardImage }}>
-                        <View className="self-start px-3 py-1 rounded-full border border-gray-700" style={{ backgroundColor: colors.background }}>
+                        <View className="self-start px-3 py-1 rounded-full" style={{ backgroundColor: story.status === 'COMPLETED' ? '#38A169' : '#E08A2A' }}>
                             <Text className="text-[10px] font-bold font-inter" style={{ color: colors.text }}>
-                                {story.status === 'COMPLETED' ? 'Completed' : 'Ongoing'}
+                                {story.status === 'Completed' || story.status === 'COMPLETED' ? 'Completed' : 'Ongoing'}
                             </Text>
                         </View>
                         <View className="flex-1 justify-center items-center">

@@ -1,10 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity } from "react-native";
 import { useTheme } from "@/context/ThemeContext";
+import { useAuth } from "@/context/AuthContext";
 import { AppService } from "@/services/app.service";
 import StoryCard from "@/components/StoryCard";
+import SkeletonStoryCard from "@/components/SkeletonStoryCard";
 import { router } from "expo-router";
 import AppHeader from "@/components/AppHeader";
+import SignInPromptScreen from "@/components/SignInPromptScreen";
+import SideMenu from "@/components/SideMenu";
 
 type LibraryItem = {
     story: any;
@@ -14,9 +18,11 @@ type LibraryItem = {
 
 export default function LibraryScreen() {
     const { colors } = useTheme();
+    const { user, isLoading: authLoading } = useAuth();
     const [items, setItems] = useState<LibraryItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState<"favorites" | "continue" | "completed" | "ongoing">("continue");
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     useEffect(() => {
         const fetchLibrary = async () => {
@@ -48,14 +54,28 @@ export default function LibraryScreen() {
         }
     }, [items, activeFilter]);
 
+    if (authLoading) {
+        return (
+            <View className="flex-1 justify-center items-center" style={{ backgroundColor: colors.background }}>
+                <ActivityIndicator size="large" color={colors.accent} />
+            </View>
+        );
+    }
+
+    if (!user) {
+        return <SignInPromptScreen />;
+    }
+
     return (
         <View className="flex-1" style={{ backgroundColor: colors.background }}>
-            <AppHeader />
+            <AppHeader onMenuPress={() => setIsMenuOpen(true)} />
 
             {loading ? (
-                <View className="flex-1 justify-center items-center">
-                    <ActivityIndicator size="large" color={colors.accent} />
-                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-4 py-6">
+                    {[...Array(4)].map((_, i) => (
+                        <SkeletonStoryCard key={i} />
+                    ))}
+                </ScrollView>
             ) : items.length === 0 ? (
                 <View className="flex-1 justify-center items-center px-6">
                     <Text className="font-inter text-base text-center" style={{ color: colors.subtext }}>
@@ -71,18 +91,18 @@ export default function LibraryScreen() {
                         My Library
                     </Text>
 
-                    <View className="flex-row rounded-full" style={{ backgroundColor: colors.card }}>
+                    <View className="mb-6 flex-row"  style={{ backgroundColor: colors.card }}>
                         {[
                             { key: "favorites", label: "Favorites" },
                             { key: "continue", label: "Continue Reading" },
-                            { key: "completed", label: "Complete" }
+                            { key: "completed", label: "Complete" },
                         ].map((tab) => {
                             const isActive = activeFilter === tab.key;
                             return (
                                 <TouchableOpacity
                                     key={tab.key}
                                     onPress={() => setActiveFilter(tab.key as any)}
-                                    className="flex-1 py-2 rounded-full items-center"
+                                    className="py-2 items-center rounded-sm p-2"
                                     style={{
                                         backgroundColor: isActive ? colors.accent : "transparent",
                                     }}
@@ -122,6 +142,7 @@ export default function LibraryScreen() {
                     </View>
                 </ScrollView>
             )}
+            <SideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
         </View>
     );
 }

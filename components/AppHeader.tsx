@@ -1,7 +1,10 @@
-import React from "react";
+import { AppContext } from "@/context/AppContext";
+import React, { useContext } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import { BookOpen, Sun, Moon, Menu, ArrowLeft } from "lucide-react-native";
+import { BookOpen, Sun, Moon, Menu, ArrowLeft, User } from "lucide-react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/context/ThemeContext";
+import { useAuth } from "@/context/AuthContext";
 import { useRouter, usePathname } from "expo-router";
 
 type AppHeaderProps = {
@@ -12,6 +15,8 @@ export default function AppHeader({ onMenuPress }: AppHeaderProps) {
   const { toggleTheme, isDarkMode, colors } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
+  const { user } = useAuth();
+  const { balance } = useContext(AppContext) || { balance: 0 };
 
   const isHome = pathname === "/(tabs)/home";
 
@@ -47,6 +52,18 @@ export default function AppHeader({ onMenuPress }: AppHeaderProps) {
         </TouchableOpacity>
       </View>
       <View className="flex-row items-center gap-4">
+        {user && (
+          <TouchableOpacity 
+            className="flex-row items-center rounded-full px-3 py-1.5"
+            style={{ backgroundColor: colors.card }}
+            onPress={() => router.push("/topup" as any)}
+          >
+            <Ionicons name="diamond" size={16} color={colors.accent} />
+            <Text className="font-bold ml-1.5 text-sm" style={{ color: colors.text }}>
+              {balance}
+            </Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity onPress={toggleTheme}>
           {isDarkMode ? (
             <Sun color={colors.icon} size={22} />

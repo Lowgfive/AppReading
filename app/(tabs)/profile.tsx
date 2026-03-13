@@ -4,11 +4,12 @@ import { useAuth } from "@/context/AuthContext";
 import { AuthService } from "@/services/auth.service";
 import { AppService } from "@/services/app.service";
 import { router } from "expo-router";
-import { BookOpen, Sun, Moon, Menu, LogOut, Edit2 } from "lucide-react-native";
+import { Sun, Moon, Menu, LogOut, Edit2 } from "lucide-react-native";
 import { useTheme } from "@/context/ThemeContext";
 import StoryCard from "@/components/StoryCard";
 import SideMenu from "@/components/SideMenu";
 import AppHeader from "@/components/AppHeader";
+import SignInPromptScreen from "@/components/SignInPromptScreen";
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 48 - 16) / 2; // (Screen width - horizontal padding - gap) / 2
@@ -183,44 +184,7 @@ export default function ProfileScreen() {
     }
 
     if (!user) {
-        return (
-            <View className="flex-1" style={{ backgroundColor: colors.background }}>
-                <AppHeader onMenuPress={() => setIsMenuOpen(true)} />
-
-                <View className="flex-1 justify-center items-center px-8">
-                    <View className="w-[100px] h-[100px] rounded-full items-center justify-center mb-6" style={{ backgroundColor: colors.card }}>
-                        <BookOpen color={colors.icon} size={48} />
-                    </View>
-                    
-                    <Text className="text-[28px] font-serif font-bold mb-4 text-center" style={{ color: colors.text }}>
-                        Welcome to Storytime
-                    </Text>
-                    
-                    <Text className="text-[15px] text-center mb-8 font-inter leading-6" style={{ color: colors.subtext }}>
-                        Sign in to access your favorites, reading history, and personalized recommendations.
-                    </Text>
-                    
-                    <View className="flex-row gap-4 w-full justify-center">
-                        <TouchableOpacity 
-                            onPress={() => router.push('/(auth)/login' as any)}
-                            className="py-[12px] px-8 rounded-xl items-center justify-center"
-                            style={{ backgroundColor: colors.accent }}
-                        >
-                            <Text className="text-black font-inter font-bold text-[15px]">Sign In</Text>
-                        </TouchableOpacity>
-                        
-                        <TouchableOpacity 
-                            onPress={() => router.push('/(auth)/register' as any)}
-                            className="py-[12px] px-8 rounded-xl items-center justify-center border"
-                            style={{ borderColor: colors.border }}
-                        >
-                            <Text className="font-inter font-bold text-[15px]" style={{ color: colors.text }}>Create Account</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-                <SideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
-            </View>
-        );
+        return <SignInPromptScreen />;
     }
 
     return (

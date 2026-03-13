@@ -13,6 +13,7 @@ export default function LoginScreen() {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [formReady, setFormReady] = useState(false);
 
     const handleLogin = async () => {
         if (!email || !password) {
@@ -24,6 +25,7 @@ export default function LoginScreen() {
         try {
             const data = await AuthService.login(email, password);
             await signIn(data.token);
+            // success animation could be here
         } catch (error: any) {
             Alert.alert("Login Failed", error.message || "Invalid credentials");
         } finally {
@@ -31,70 +33,85 @@ export default function LoginScreen() {
         }
     };
 
+    // simulate form load
+    React.useEffect(() => {
+        const t = setTimeout(() => setFormReady(true), 500);
+        return () => clearTimeout(t);
+    }, []);
+
     return (
         <SafeAreaView style={styles.container}>
             <AppHeader />
             <View style={styles.content}>
-                {/* Form Card */}
-                <View style={styles.card}>
-                    <View style={styles.inputContainer}>
-                        <Text style={styles.label}>Email</Text>
-                        <View style={styles.inputWrapper}>
-                            <Mail size={20} color="#9CA3AF" style={styles.inputIcon} />
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Enter your email"
-                                placeholderTextColor="#6B7280"
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                                value={email}
-                                onChangeText={setEmail}
-                            />
+                {formReady ? (
+                    // Form Card
+                    <View style={styles.card}>
+                        <View style={styles.inputContainer}>
+                            <Text style={styles.label}>Email</Text>
+                            <View style={styles.inputWrapper}>
+                                <Mail size={20} color="#9CA3AF" style={styles.inputIcon} />
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Enter your email"
+                                    placeholderTextColor="#6B7280"
+                                    keyboardType="email-address"
+                                    autoCapitalize="none"
+                                    value={email}
+                                    onChangeText={setEmail}
+                                />
+                            </View>
                         </View>
-                    </View>
 
-                    <View style={styles.inputContainer}>
-                        <View style={styles.passwordHeader}>
-                            <Text style={styles.label}>Password</Text>
-                            <Pressable>
-                                <Text style={styles.forgotText}>Forgot password?</Text>
-                            </Pressable>
+                        <View style={styles.inputContainer}>
+                            <View style={styles.passwordHeader}>
+                                <Text style={styles.label}>Password</Text>
+                                <Pressable>
+                                    <Text style={styles.forgotText}>Forgot password?</Text>
+                                </Pressable>
+                            </View>
+                            <View style={styles.inputWrapper}>
+                                <Lock size={20} color="#9CA3AF" style={styles.inputIcon} />
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Enter your password"
+                                    placeholderTextColor="#6B7280"
+                                    secureTextEntry={!showPassword}
+                                    value={password}
+                                    onChangeText={setPassword}
+                                />
+                                <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                                    {showPassword ? (
+                                        <Eye size={20} color="#9CA3AF" />
+                                    ) : (
+                                        <EyeOff size={20} color="#9CA3AF" />
+                                    )}
+                                </Pressable>
+                            </View>
                         </View>
-                        <View style={styles.inputWrapper}>
-                            <Lock size={20} color="#9CA3AF" style={styles.inputIcon} />
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Enter your password"
-                                placeholderTextColor="#6B7280"
-                                secureTextEntry={!showPassword}
-                                value={password}
-                                onChangeText={setPassword}
-                            />
-                            <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                                {showPassword ? (
-                                    <Eye size={20} color="#9CA3AF" />
-                                ) : (
-                                    <EyeOff size={20} color="#9CA3AF" />
-                                )}
-                            </Pressable>
-                        </View>
-                    </View>
 
-                    <Pressable
-                        style={[styles.button, loading && styles.buttonDisabled]}
-                        onPress={handleLogin}
-                        disabled={loading}
-                    >
-                        <Text style={styles.buttonText}>{loading ? 'Signing in...' : 'Sign In'}</Text>
-                    </Pressable>
-
-                    <View style={styles.footer}>
-                        <Text style={styles.footerText}>Dont have an account? </Text>
-                        <Pressable onPress={() => router.push('/(auth)/register')}>
-                            <Text style={styles.footerLink}>Sign up</Text>
+                        <Pressable
+                            style={[styles.button, loading && styles.buttonDisabled]}
+                            onPress={handleLogin}
+                            disabled={loading}
+                        >
+                            <Text style={styles.buttonText}>{loading ? 'Signing in...' : 'Sign In'}</Text>
                         </Pressable>
+
+                        <View style={styles.footer}>
+                            <Text style={styles.footerText}>Dont have an account? </Text>
+                            <Pressable onPress={() => router.push('/(auth)/register')}>
+                                <Text style={styles.footerLink}>Sign up</Text>
+                            </Pressable>
+                        </View>
                     </View>
-                </View>
+                ) : (
+                    // skeleton
+                    <View style={[styles.card, { padding: 24 }]}>                        
+                        <View style={{ height: 20, backgroundColor: '#333', borderRadius: 4, marginBottom: 20 }} />
+                        <View style={{ height: 20, backgroundColor: '#333', borderRadius: 4, marginBottom: 20 }} />
+                        <View style={{ height: 50, backgroundColor: '#333', borderRadius: 8 }} />
+                    </View>
+                )}
             </View>
         </SafeAreaView>
     );

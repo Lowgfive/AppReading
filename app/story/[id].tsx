@@ -77,10 +77,18 @@ export default function StoryDetailScreen() {
     };
 
     if (!story) {
+        // simplified skeleton mimic header and a few lines
         return (
-            <View className="flex-1 justify-center items-center" style={{ backgroundColor: colors.background }}>
-                <ActivityIndicator size="large" color={colors.accent} />
-            </View>
+            <ScrollView className="flex-1" style={{ backgroundColor: colors.background }}>
+                <View className="w-full h-[400px] bg-gray-700 animate-pulse" />
+                <View className="p-4">
+                    <View className="h-6 bg-gray-600 rounded mb-2 w-3/4 animate-pulse" />
+                    <View className="h-4 bg-gray-600 rounded mb-4 w-1/2 animate-pulse" />
+                    <View className="h-4 bg-gray-600 rounded mb-2 w-full animate-pulse" />
+                    <View className="h-4 bg-gray-600 rounded mb-2 w-full animate-pulse" />
+                    <View className="h-4 bg-gray-600 rounded mb-2 w-2/3 animate-pulse" />
+                </View>
+            </ScrollView>
         );
     }
 
