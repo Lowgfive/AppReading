@@ -1,23 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, ImageBackground, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, ScrollView, ImageBackground, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Play, Heart, Star, Eye, BookOpen, Clock, ChevronRight, ChevronLeft } from 'lucide-react-native';
+import { Play, Heart, Star, Eye, BookOpen, Clock, ChevronRight, ChevronLeft, Lock, Gem } from 'lucide-react-native';
 import { AppService } from '@/services/app.service';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
+import { AppContext } from '@/context/AppContext';
+import { useContext } from 'react';
 
 export default function StoryDetailScreen() {
     const { id, storyData } = useLocalSearchParams();
     const router = useRouter();
     const { colors, isDarkMode } = useTheme();
     const { user } = useAuth();
+    
+    // Defaulting context to empty objects/functions in case it's not wrapped (though it is)
+    const appContext = useContext(AppContext);
+    const showToast = appContext?.showToast || (() => {});
+    const fetchBalance = appContext?.fetchBalance || (async () => {});
     const [story, setStory] = useState<any>(null);
     const [chapters, setChapters] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isLiked, setIsLiked] = useState(false);
     const [isLiking, setIsLiking] = useState(false);
-
+    console.log("isLiked", isLiked)
     useEffect(() => {
         if (storyData) {
             try {
@@ -28,16 +35,75 @@ export default function StoryDetailScreen() {
         }
         fetchChapters();
         checkIfLiked();
-    }, [id, storyData]);
+    }, [id, storyData, user]);
 
+
+    const handleChapterPress = (chapter: any, index: number) => {
+        if (chapter.isPay === false) {
+            handleUnlockChapter(chapter);
+            return;
+        }
+        const cNum = chapter.chapterNumber || index + 1;
+        router.push({
+            pathname: `/reader/${id}/read/${cNum}` as any,
+            params: { storyTitle: story.name }
+        });
+    };
+
+    const handleUnlockChapter = async (chapter: any) => {
+
+        if (!user) {
+            if (Platform.OS === 'web') {
+                window.alert("Please sign in to unlock chapters.");
+            } else {
+                Alert.alert("Sign In Required", "Please sign in to unlock chapters.");
+            }
+            return;
+        }
+
+        const confirmMessage = `Do you want to unlock this chapter for ${chapter.price || 50} stones?`;
+
+        const executeUnlock = async () => {
+            try {
+                setLoading(true);
+
+                await AppService.unlockChapter(id as string, chapter._id);
+                if (Platform.OS === 'web') window.alert("Chapter unlocked successfully!");
+                else Alert.alert("Success", "Chapter unlocked successfully!");
+                await fetchChapters();
+            } catch (error: any) {
+                const errorMsg = error?.response?.data?.message || "Failed to unlock chapter. Please check your balance.";
+                if (Platform.OS === 'web') window.alert(errorMsg);
+                else Alert.alert("Error", errorMsg);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (Platform.OS === 'web') {
+            const result = window.confirm(confirmMessage);
+            if (result) {
+                executeUnlock();
+            } else {
+                console.log("Unlock Cancelled on Web");
+            }
+        } else {
+            Alert.alert(
+                "Unlock Chapter",
+                confirmMessage,
+                [
+                    { text: "Cancel", style: "cancel", onPress: () => console.log("Unlock Cancelled on Mobile") },
+                    { text: "Unlock", onPress: executeUnlock }
+                ]
+            );
+        }
+    };
     const checkIfLiked = async () => {
         try {
-            if (user) {
-                const likedRes = await AppService.likeStories(story._id);
-                if (likedRes && likedRes.result && likedRes.result.length > 0) {
-                    const likedStoryIds = likedRes.result[0].stories.map((story: any) => story._id);
-                    setIsLiked(likedStoryIds.includes(id));
-                }
+            // Use the route param (id) to avoid missing the story object when navigating directly
+            if (user && id) {
+                const liked = await AppService.checkIfLiked(id as string);
+                setIsLiked(liked);
             }
         } catch (error) {
             console.error("Error checking if story is liked:", error);
@@ -58,7 +124,7 @@ export default function StoryDetailScreen() {
 
     const handleAddToFavorites = async () => {
         if (!user) {
-            Alert.alert("Sign In Required", "Please sign in to save your favorite stories.");
+            showToast("Please sign in to save your favorite stories.", 'info');
             return;
         }
 
@@ -67,10 +133,10 @@ export default function StoryDetailScreen() {
             await AppService.likeStories(story._id);
             setIsLiked(!isLiked);
             const message = isLiked ? "Removed from Favorites" : "Added to Favorites";
-            Alert.alert("Success", message);
+            showToast(message, 'success');
         } catch (error) {
             console.error("Error toggling like:", error);
-            Alert.alert("Error", "Failed to update favorites. Please try again.");
+            showToast("Failed to update favorites. Please try again.", 'error');
         } finally {
             setIsLiking(false);
         }
@@ -101,8 +167,8 @@ export default function StoryDetailScreen() {
         return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     };
 
-    const gradientColors = (isDarkMode 
-        ? ['rgba(18,18,18,0.4)', 'rgba(18,18,18,0.8)', '#121212'] 
+    const gradientColors = (isDarkMode
+        ? ['rgba(18,18,18,0.4)', 'rgba(18,18,18,0.8)', '#121212']
         : ['rgba(255,255,255,0.4)', 'rgba(255,255,255,0.8)', '#FFFFFF']) as [string, string, string];
 
     const fallbackGradientColors = (isDarkMode
@@ -111,7 +177,7 @@ export default function StoryDetailScreen() {
 
     return (
         <View className="flex-1" style={{ backgroundColor: colors.background }}>
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false} bounces={false}>
+            <ScrollView className="flex-1" showsVerticalScrollIndicator={false} bounces={false} keyboardShouldPersistTaps="handled">
                 <View className="w-full h-[400px]">
                     {story.image ? (
                         <ImageBackground
@@ -225,11 +291,14 @@ export default function StoryDetailScreen() {
                             <Play fill="#000" color="#000" size={16} className="mr-3" />
                             <Text className="text-black font-semibold text-[15px] font-inter">Read Now</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity 
+                    </View>
+
+                    <View className="mb-10 items-start">
+                        <TouchableOpacity
                             disabled={isLiking}
                             onPress={handleAddToFavorites}
-                            className="flex-row items-center pl-6 pr-8 border py-[14px] rounded-xl bg-transparent min-w-[190px]" 
-                            style={{ 
+                            className="flex-row items-center pl-6 pr-8 border py-[14px] rounded-xl bg-transparent min-w-[190px]"
+                            style={{
                                 borderColor: isLiked ? colors.accent : colors.accent,
                                 backgroundColor: isLiked ? `${colors.accent}10` : 'transparent'
                             }}
@@ -237,15 +306,15 @@ export default function StoryDetailScreen() {
                             {isLiking ? (
                                 <ActivityIndicator size={16} color={colors.accent} className="mr-3" />
                             ) : (
-                                <Heart 
-                                    color={isLiked ? colors.accent : colors.accent} 
+                                <Heart
+                                    color={isLiked ? colors.accent : colors.accent}
                                     fill={isLiked ? colors.accent : 'transparent'}
-                                    size={16} 
-                                    className="mr-3" 
+                                    size={16}
+                                    className="mr-3"
                                 />
                             )}
-                            <Text 
-                                className="font-medium text-[15px] font-inter" 
+                            <Text
+                                className="font-medium text-[15px] font-inter"
                                 style={{ color: colors.accent, opacity: isLiking ? 0.6 : 1 }}
                             >
                                 {isLiked ? "Added to Favorites" : "Add to Favorites"}
@@ -264,30 +333,48 @@ export default function StoryDetailScreen() {
                             {chapters.length > 0 ? chapters.map((chapter: any, index: number) => (
                                 <TouchableOpacity
                                     key={chapter._id || index}
+                                    activeOpacity={0.7}
                                     className="rounded-xl p-[18px] flex-row items-center justify-between"
-                                    style={{ backgroundColor: colors.card }}
-                                    onPress={() => {
-                                        const cNum = chapter.chapterNumber || index + 1;
-                                        router.push({
-                                            pathname: `/reader/${id}/read/${cNum}` as any,
-                                            params: { storyTitle: story.name }
-                                        });
-                                    }}
+                                    style={{ backgroundColor: colors.card, opacity: chapter.isPay === false ? 0.8 : 1 }}
+                                    onPress={() => handleChapterPress(chapter, index)}
                                 >
                                     <View className="flex-row items-center flex-1">
-                                        <View className="w-10 h-10 rounded-full items-center justify-center mr-4" style={{ backgroundColor: colors.border }}>
-                                            <Text className="font-bold text-[15px] font-inter" style={{ color: colors.text }}>{chapter.chapterNumber || index + 1}</Text>
-                                        </View>
+                                        {chapter.isPay === false ? (
+                                            <View className="w-10 h-10 items-center justify-center mr-4">
+                                                <Lock color={colors.text} size={20} />
+                                            </View>
+                                        ) : (
+                                            <View className="w-10 h-10 rounded-full items-center justify-center mr-4" style={{ backgroundColor: colors.border }}>
+                                                <Text className="font-bold text-[15px] font-inter" style={{ color: colors.text }}>{chapter.chapterNumber || index + 1}</Text>
+                                            </View>
+                                        )}
                                         <View className="flex-1 pr-4">
-                                            <Text className="font-bold text-[15px] mb-[6px] font-inter" style={{ color: colors.text }} numberOfLines={1}>
+                                            <Text className="font-bold text-[15px] mb-[4px] font-inter" style={{ color: chapter.isPay === false ? colors.accent : colors.text }} numberOfLines={1}>
                                                 {chapter.title || `Chapter ${chapter.chapterNumber || index + 1}`}
                                             </Text>
-                                            <Text className="text-[13px] font-inter" style={{ color: colors.subtext }}>
-                                                {chapter.wordCount || (Math.floor(Math.random() * (3000 - 1500 + 1) + 1500))} words • {formatDate(chapter.createdAt || new Date().toISOString())}
-                                            </Text>
+                                            <View className="flex-row items-center flex-wrap">
+                                                <Text className="text-[13px] font-inter" style={{ color: colors.subtext }}>
+                                                    {chapter.wordCount ? `${chapter.wordCount} words • ` : ''}{formatDate(chapter.createdAt || new Date().toISOString())}
+                                                </Text>
+                                                {chapter.isPay === false && (
+                                                    <View className="flex-row items-center ml-2">
+                                                        <Gem size={12} color="#F59E0B" />
+                                                        <Text className="text-[13px] ml-1 font-inter font-bold text-amber-500">
+                                                            50 stones
+                                                        </Text>
+                                                    </View>
+                                                )}
+                                            </View>
                                         </View>
                                     </View>
-                                    <ChevronRight color={colors.iconMuted} size={20} />
+                                    {chapter.isPay === false ? (
+                                        <View className="flex-row items-center px-4 py-2 rounded-lg" style={{ backgroundColor: colors.border }}>
+                                            <Lock color={colors.text} size={14} />
+                                            <Text className="ml-2 font-bold font-inter text-[13px]" style={{ color: colors.text }}>Unlock</Text>
+                                        </View>
+                                    ) : (
+                                        <ChevronRight color={colors.iconMuted} size={20} />
+                                    )}
                                 </TouchableOpacity>
                             )) : (
                                 <Text className="font-inter text-center py-8 text-[15px]" style={{ color: colors.subtext }}>There are no chapters available yet.</Text>

@@ -30,7 +30,7 @@ export const AppService = {
     },
     async getStoryChapters(storyId: string) {
         const token = await AuthService.getToken();
-        
+
         const res = await axios.get(`${API_URL}/chapters/${storyId}/list`, {
             headers: { Authorization: `Bearer ${token}` }
         });
@@ -43,12 +43,12 @@ export const AppService = {
         } catch (e) {
             console.log("No token found, proceeding as guest.");
         }
-        
+
         const headers: Record<string, string> = {};
         if (token) {
             headers["Authorization"] = `Bearer ${token}`;
         }
-        
+
         const res = await axios.get(`${API_URL}/chapters/${storyId}/read/${chapterNumber}`, {
             headers
         });
@@ -57,9 +57,22 @@ export const AppService = {
     async getLikedStories() {
         const token = await AuthService.getToken();
         const res = await axios.get(`${API_URL}/stories/getLikeStory`, {
-             headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` }
         });
         return res.data;
+    },
+    async checkIfLiked(storyId: string) {
+        const token = await AuthService.getToken();
+        if (!token) return false;
+        try {
+            const res = await axios.get(`${API_URL}/stories/check-like/${storyId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            return res.data.liked;
+        } catch (error) {
+          
+            return false;
+        }
     },
     async getLibrary() {
         const token = await AuthService.getToken();
@@ -75,5 +88,15 @@ export const AppService = {
             headers: { Authorization: `Bearer ${token}` }
         });
         return res.data;
+    },
+    async unlockChapter(storyId: string, chapterId: string) {
+        const token = await AuthService.getToken();
+        const response = await axios.post(`${API_URL}/chapters/unlockChapter`, {
+            storyId,
+            chapterId
+        }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
     }
 }

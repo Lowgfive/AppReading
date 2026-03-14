@@ -33,5 +33,29 @@ export const AuthService = {
             headers: { Authorization: `Bearer ${token}` }
         });
         return response.data;
+    },
+
+    async updateProfile(data: { username?: string, description?: string, email?: string }) {
+        const token = await Storage.getItem(TOKEN_KEY);
+        const response = await axios.put(`${API_URL}/auth/profile`, data, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
+    },
+
+    async updateAvatar(avatar: string) {
+        const token = await Storage.getItem(TOKEN_KEY);
+        const response = await axios.put(`${API_URL}/auth/avatar`, { avatar }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
+    },
+
+    async updatePassword(oldPassword: string, newPassword: string) {
+        const token = await Storage.getItem(TOKEN_KEY);
+        const response = await axios.put(`${API_URL}/auth/password`, { oldPassword, newPassword }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
     }
 };

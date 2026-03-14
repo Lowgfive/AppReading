@@ -10,6 +10,7 @@ import StoryCard from "@/components/StoryCard";
 import SideMenu from "@/components/SideMenu";
 import AppHeader from "@/components/AppHeader";
 import SignInPromptScreen from "@/components/SignInPromptScreen";
+import Settings from "@/components/Settings";
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 48 - 16) / 2; // (Screen width - horizontal padding - gap) / 2
@@ -22,13 +23,13 @@ export default function ProfileScreen() {
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('favorites');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    
+
     useEffect(() => {
         if (user && !authLoading) {
             fetchProfileAndStories();
         }
     }, [user, authLoading]);
-   
+
     const fetchProfileAndStories = async () => {
         try {
             setLoading(true);
@@ -36,11 +37,11 @@ export default function ProfileScreen() {
                 AuthService.getProfile(),
                 AppService.getLikedStories()
             ]);
-            
+
             if (profileRes && profileRes.user) {
                 setProfileData(profileRes.user);
             }
-            
+
             if (likedRes && likedRes.result && likedRes.result.length > 0) {
                 setLikedStories(likedRes.result[0].stories || []);
             }
@@ -57,7 +58,7 @@ export default function ProfileScreen() {
 
     const renderHeader = () => {
         if (loading || !profileData) return (
-             <View className="py-10">
+            <View className="py-10">
                 <ActivityIndicator size="large" color={colors.accent} />
             </View>
         );
@@ -68,7 +69,7 @@ export default function ProfileScreen() {
                 <View className="px-6 py-6 items-center">
                     <View className="relative mb-4">
                         <View className="w-24 h-24 rounded-full overflow-hidden border-2" style={{ borderColor: colors.accent }}>
-                            <Image 
+                            <Image
                                 className="w-full h-full"
                             />
                         </View>
@@ -103,7 +104,7 @@ export default function ProfileScreen() {
                     </View>
 
                     {/* Sign Out Button */}
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         onPress={handleSignOut}
                         className="flex-row items-center justify-center px-6 py-3 rounded-full border mb-8"
                         style={{ borderColor: colors.border, backgroundColor: 'transparent' }}
@@ -115,17 +116,17 @@ export default function ProfileScreen() {
 
                 {/* Tabs */}
                 <View className="flex-row border-b px-6 pt-2" style={{ borderBottomColor: colors.border }}>
-                    {['Favorites', 'History', 'Settings'].map((tab) => {
+                    {['Favorites', 'Settings'].map((tab) => {
                         const tabKey = tab.toLowerCase();
                         const isActive = activeTab === tabKey;
                         return (
-                            <TouchableOpacity 
+                            <TouchableOpacity
                                 key={tabKey}
                                 onPress={() => setActiveTab(tabKey)}
                                 className={`mr-6 pb-4 ${isActive ? 'border-b-2' : ''}`}
                                 style={{ borderBottomColor: isActive ? colors.accent : 'transparent' }}
                             >
-                                <Text 
+                                <Text
                                     className={`font-inter font-bold ${isActive ? '' : 'opacity-60'}`}
                                     style={{ color: isActive ? colors.accent : colors.text }}
                                 >
@@ -151,7 +152,7 @@ export default function ProfileScreen() {
                         <Text className="font-inter text-center mb-4" style={{ color: colors.subtext }}>
                             Bạn chưa yêu thích truyện nào
                         </Text>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             className="px-6 py-2 rounded-full"
                             style={{ backgroundColor: colors.accent }}
                             onPress={() => router.push('/(tabs)/home' as any)}
@@ -161,9 +162,19 @@ export default function ProfileScreen() {
                     </View>
                 );
             }
-            
+
             // Adjust card wrapper for 2-column layout (FlatList handles spacing automatically if columnWrapperStyle is provided)
-            return null; 
+            return null;
+        }
+
+        if (activeTab === 'settings') {
+            return (
+                <Settings 
+                    profileData={profileData} 
+                    setProfileData={setProfileData} 
+                    handleSignOut={handleSignOut} 
+                />
+            );
         }
 
         return (
@@ -204,18 +215,18 @@ export default function ProfileScreen() {
                     if (activeTab !== 'favorites') return null;
                     return (
                         <View style={{ width: cardWidth, marginBottom: 16 }}>
-                            <StoryCard 
-                                story={item} 
+                            <StoryCard
+                                story={item}
                                 onPress={() => router.push({
                                     pathname: `/story/${item._id}` as any,
                                     params: { storyData: JSON.stringify(item) }
-                                })} 
+                                })}
                             />
                         </View>
                     );
                 }}
             />
-            
+
             <SideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
         </View>
     );
