@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert } from "react-native";
+import { View, Text, TouchableOpacity, Modal, TextInput, ActivityIndicator } from "react-native";
 import { LogOut } from "lucide-react-native";
 import { AuthService } from "@/services/auth.service";
 import { useTheme } from "@/context/ThemeContext";
+import { useToast } from "@/context/ToastContext";
 
 interface SettingsProps {
     profileData: any;
@@ -12,6 +13,7 @@ interface SettingsProps {
 
 export default function Settings({ profileData, setProfileData, handleSignOut }: SettingsProps) {
     const { colors } = useTheme();
+    const { showToast } = useToast();
 
     // Edit Modal States
     const [editModalVisible, setEditModalVisible] = useState(false);
@@ -37,15 +39,15 @@ export default function Settings({ profileData, setProfileData, handleSignOut }:
             setIsSaving(true);
             if (editField === 'password') {
                 if (!oldPassword || !editValue) {
-                    Alert.alert("Lỗi", "Vui lòng nhập đầy đủ mật khẩu cũ và mới");
+                    showToast("Vui lòng nhập đầy đủ mật khẩu cũ và mới", "error");
                     return;
                 }
                 const res = await AuthService.updatePassword(oldPassword, editValue);
                 if (res.success) {
-                    Alert.alert("Thành công", "Cập nhật mật khẩu thành công");
+                    showToast("Cập nhật mật khẩu thành công", "success");
                     setEditModalVisible(false);
                 } else {
-                    Alert.alert("Lỗi", res.message || "Đổi mật khẩu thất bại");
+                    showToast(res.message || "Đổi mật khẩu thất bại", "error");
                 }
             } else {
                 const dataToUpdate: any = {};
@@ -53,14 +55,14 @@ export default function Settings({ profileData, setProfileData, handleSignOut }:
                 const res = await AuthService.updateProfile(dataToUpdate);
                 if (res.success) {
                     setProfileData({ ...profileData, [editField]: editValue });
-                    Alert.alert("Thành công", "Cập nhật thông tin thành công");
+                    showToast("Cập nhật thông tin thành công", "success");
                     setEditModalVisible(false);
                 } else {
-                    Alert.alert("Lỗi", res.message || "Cập nhật thông tin thất bại");
+                    showToast(res.message || "Cập nhật thông tin thất bại", "error");
                 }
             }
         } catch (error: any) {
-            Alert.alert("Lỗi", error?.response?.data?.message || "Có lỗi xảy ra");
+            showToast(error?.response?.data?.message || "Có lỗi xảy ra", "error");
         } finally {
             setIsSaving(false);
         }

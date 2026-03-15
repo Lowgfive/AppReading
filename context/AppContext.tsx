@@ -2,7 +2,7 @@ import { AppService } from "@/services/app.service";
 import { Story } from "@/types/story.type";
 import { createContext, PropsWithChildren, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
-
+import { Toast } from "@/components/Toast";
 type ToastType = 'success' | 'error' | 'info';
 
 type AppContextType = {
@@ -86,4 +86,3 @@ export default function AppProvider({ children }: PropsWithChildren) {
 }
 
 // Ensure you import the Toast component at the top of this file
-import { Toast } from "@/components/Toast";

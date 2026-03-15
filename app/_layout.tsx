@@ -8,6 +8,7 @@ import AppProvider from '@/context/AppContext';
 import AuthProvider from '@/context/AuthContext';
 import AuthFormProvider from '@/context/AuthFormContext';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { ToastProvider } from '@/context/ToastContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -31,13 +32,15 @@ export default function Layout() {
 
     return (
         <ThemeProvider>
-            <AuthProvider>
-                <AppProvider>
-                    <AuthFormProvider>
-                        <Stack screenOptions={{ headerShown: false, animation: 'fade' }} />
-                    </AuthFormProvider>
-                </AppProvider>
-            </AuthProvider>
+            <ToastProvider>
+                <AuthProvider>
+                    <AppProvider>
+                        <AuthFormProvider>
+                            <Stack screenOptions={{ headerShown: false, animation: 'fade' }} />
+                        </AuthFormProvider>
+                    </AppProvider>
+                </AuthProvider>
+            </ToastProvider>
         </ThemeProvider>
     );
 }

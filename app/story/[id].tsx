@@ -8,23 +8,34 @@ import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { AppContext } from '@/context/AppContext';
 import { useContext } from 'react';
+import { useToast } from '@/context/ToastContext';
 
 export default function StoryDetailScreen() {
     const { id, storyData } = useLocalSearchParams();
     const router = useRouter();
     const { colors, isDarkMode } = useTheme();
     const { user } = useAuth();
+    const { showToast } = useToast();
     
     // Defaulting context to empty objects/functions in case it's not wrapped (though it is)
     const appContext = useContext(AppContext);
-    const showToast = appContext?.showToast || (() => {});
+    const balance = appContext?.balance ?? 0;
+    const setBalance = appContext?.setBalance;
     const fetchBalance = appContext?.fetchBalance || (async () => {});
+    
     const [story, setStory] = useState<any>(null);
     const [chapters, setChapters] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isLiked, setIsLiked] = useState(false);
     const [isLiking, setIsLiking] = useState(false);
-    console.log("isLiked", isLiked)
+    const [purchaseTrigger, setPurchaseTrigger] = useState(0);
+
+    useEffect(() => {
+        if (purchaseTrigger > 0) {
+            fetchBalance();
+        }
+    }, [purchaseTrigger]);
+
     useEffect(() => {
         if (storyData) {
             try {
@@ -36,7 +47,6 @@ export default function StoryDetailScreen() {
         fetchChapters();
         checkIfLiked();
     }, [id, storyData, user]);
-
 
     const handleChapterPress = (chapter: any, index: number) => {
         if (chapter.isPay === false) {
@@ -51,51 +61,43 @@ export default function StoryDetailScreen() {
     };
 
     const handleUnlockChapter = async (chapter: any) => {
-
         if (!user) {
-            if (Platform.OS === 'web') {
-                window.alert("Please sign in to unlock chapters.");
-            } else {
-                Alert.alert("Sign In Required", "Please sign in to unlock chapters.");
-            }
+            showToast("Please sign in to unlock chapters.", "info");
             return;
         }
 
-        const confirmMessage = `Do you want to unlock this chapter for ${chapter.price || 50} stones?`;
+        const chapterPrice = chapter.price || 50;
 
-        const executeUnlock = async () => {
-            try {
-                setLoading(true);
+        // 3. If the user's balance is NOT enough
+        if (balance < chapterPrice) {
+            showToast("Your balance is not enough to buy this chapter", "error");
+            return;
+        }
 
-                await AppService.unlockChapter(id as string, chapter._id);
-                if (Platform.OS === 'web') window.alert("Chapter unlocked successfully!");
-                else Alert.alert("Success", "Chapter unlocked successfully!");
-                await fetchChapters();
-            } catch (error: any) {
-                const errorMsg = error?.response?.data?.message || "Failed to unlock chapter. Please check your balance.";
-                if (Platform.OS === 'web') window.alert(errorMsg);
-                else Alert.alert("Error", errorMsg);
-            } finally {
-                setLoading(false);
+        try {
+            setLoading(true);
+
+            // 1. Call the API to buy the chapter directly (no confirmation)
+            await AppService.unlockChapter(id as string, chapter._id);
+            
+            // 4. If the purchase succeeds
+            showToast("Chapter purchased successfully", "success");
+
+            // 2. Decrease the user's balance and update UI immediately
+            if (setBalance) {
+                setBalance((prev: number | null) => (prev !== null ? prev - chapterPrice : null));
             }
-        };
 
-        if (Platform.OS === 'web') {
-            const result = window.confirm(confirmMessage);
-            if (result) {
-                executeUnlock();
-            } else {
-                console.log("Unlock Cancelled on Web");
-            }
-        } else {
-            Alert.alert(
-                "Unlock Chapter",
-                confirmMessage,
-                [
-                    { text: "Cancel", style: "cancel", onPress: () => console.log("Unlock Cancelled on Mobile") },
-                    { text: "Unlock", onPress: executeUnlock }
-                ]
-            );
+            // 5. Trigger useEffect to refresh balance from server
+            setPurchaseTrigger(prev => prev + 1);
+
+            // 7. Update the chapter state so the user can read it immediately
+            await fetchChapters();
+        } catch (error: any) {
+            const errorMsg = error?.response?.data?.message || "Failed to unlock chapter. Please check your balance.";
+            showToast(errorMsg, "error");
+        } finally {
+            setLoading(false);
         }
     };
     const checkIfLiked = async () => {
@@ -139,6 +141,14 @@ export default function StoryDetailScreen() {
             showToast("Failed to update favorites. Please try again.", 'error');
         } finally {
             setIsLiking(false);
+        }
+    };
+
+    const handleReadNow = () => {
+        if (chapters.length > 0) {
+            handleChapterPress(chapters[0], 0);
+        } else {
+            showToast("No chapters available to read.", "info");
         }
     };
 
@@ -287,7 +297,11 @@ export default function StoryDetailScreen() {
                     </Text>
 
                     <View className="gap-3 mb-10 items-start">
-                        <TouchableOpacity className="flex-row items-center pl-6 pr-8 py-[14px] rounded-xl flex min-w-[190px]" style={{ backgroundColor: colors.accent }}>
+                        <TouchableOpacity 
+                            onPress={handleReadNow}
+                            className="flex-row items-center pl-6 pr-8 py-[14px] rounded-xl flex min-w-[190px]" 
+                            style={{ backgroundColor: colors.accent }}
+                        >
                             <Play fill="#000" color="#000" size={16} className="mr-3" />
                             <Text className="text-black font-semibold text-[15px] font-inter">Read Now</Text>
                         </TouchableOpacity>

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, SafeAreaView, Alert, ScrollView } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { AuthService } from '../../services/auth.service';
 import AppHeader from '@/components/AppHeader';
+import { useToast } from '@/context/ToastContext';
 
 export default function RegisterScreen() {
     const router = useRouter();
+    const { showToast } = useToast();
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -17,24 +19,22 @@ export default function RegisterScreen() {
 
     const handleRegister = async () => {
         if (!username || !email || !password || !confirmPassword) {
-            Alert.alert("Error", "Please fill in all fields");
+            showToast("Please fill in all fields", "error");
             return;
         }
 
         if (password !== confirmPassword) {
-            Alert.alert("Error", "Passwords do not match");
+            showToast("Passwords do not match", "error");
             return;
         }
 
         setLoading(true);
         try {
             await AuthService.register(username, email, password);
-            // Wait shortly to let user see success, then navigate 
-            Alert.alert("Success", "Account created successfully", [
-                { text: "OK", onPress: () => router.push('/(auth)/login') }
-            ]);
+            showToast("Account created successfully", "success");
+            router.push('/(auth)/login');
         } catch (error: any) {
-            Alert.alert("Registration Failed", error.message || "An error occurred");
+            showToast(error.message || "An error occurred", "error");
         } finally {
             setLoading(false);
         }

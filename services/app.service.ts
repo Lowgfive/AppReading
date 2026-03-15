@@ -28,6 +28,10 @@ export const AppService = {
         );
         return response.data;
     },
+    async getStoryById(storyId: string) {
+        const res = await axios.get(`${API_URL}/stories/${storyId}`);
+        return res.data;
+    },
     async getStoryChapters(storyId: string) {
         const token = await AuthService.getToken();
 

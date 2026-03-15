@@ -1,19 +1,52 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StatusBar, Platform, SafeAreaView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, ChevronRight, Home, Settings } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Home, Settings, Lock } from 'lucide-react-native';
 import { AppService } from '@/services/app.service';
 import { useTheme } from '@/context/ThemeContext';
+import { useToast } from '@/context/ToastContext';
 
 export default function ReaderScreen() {
     const { storyId, chapterNumber, storyTitle } = useLocalSearchParams();
     const router = useRouter();
     const { colors, isDarkMode } = useTheme();
+    const { showToast } = useToast();
     const [chapter, setChapter] = useState<any>(null);
-    const [totalChapters, setTotalChapters] = useState<number>(1);
+    const [chapters, setChapters] = useState<any[]>([]);
+    const [totalChapters, setTotalChapters] = useState<number>(0);
     const [loading, setLoading] = useState(true);
 
     const currentChapterNum = Number(chapterNumber) || 1;
+
+    useEffect(() => {
+        const fetchStoryData = async () => {
+            try {
+                const [storyRes, chaptersRes] = await Promise.all([
+                    AppService.getStoryById(storyId as string),
+                    AppService.getStoryChapters(storyId as string)
+                ]);
+
+                if (storyRes) {
+                    setTotalChapters(storyRes.chapterCount || storyRes.totalChapters || 0);
+                }
+
+                if (chaptersRes) {
+                    const chapterList = chaptersRes.chapters || chaptersRes || [];
+                    setChapters(chapterList);
+                    
+                    if (totalChapters === 0 && chapterList.length > 0) {
+                        setTotalChapters(chapterList.length);
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching story or chapters:", error);
+            }
+        };
+
+        if (storyId) {
+            fetchStoryData();
+        }
+    }, [storyId]);
 
     useEffect(() => {
         fetchChapterContent();
@@ -24,36 +57,50 @@ export default function ReaderScreen() {
             setLoading(true);
             const data = await AppService.getChapterContent(storyId as string, currentChapterNum);
             setChapter(data.chapter || data);
-
-            if (data.totalChapters) {
-                setTotalChapters(data.totalChapters);
-            } else if (data.chapter?.totalChapters) {
-                setTotalChapters(data.chapter.totalChapters);
-            }
-
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error fetching chapter content:", error);
+            if (error.response?.status === 403 || error.response?.data?.message?.includes('locked')) {
+                showToast("This chapter is locked. Please purchase it first.", "error");
+            }
         } finally {
             setLoading(false);
         }
     };
 
+    const getChapterStatus = (num: number) => {
+        if (chapters.length === 0) return true;
+        const targetChapter = chapters.find(c => (c.chapterNumber || chapters.indexOf(c) + 1) === num);
+        return targetChapter ? targetChapter.isPay !== false : true;
+    };
+
     const handlePrevChapter = () => {
-        if (currentChapterNum > 1) {
-            router.replace({
-                pathname: `/reader/${storyId}/read/${currentChapterNum - 1}` as any,
-                params: { storyTitle }
-            });
+        if (currentChapterNum <= 1) return;
+        
+        const isUnlocked = getChapterStatus(currentChapterNum - 1);
+        if (!isUnlocked) {
+            showToast("This chapter is locked. Please purchase it first.", "error");
+            return;
         }
+
+        router.replace({
+            pathname: `/reader/${storyId}/read/${currentChapterNum - 1}` as any,
+            params: { storyTitle }
+        });
     };
 
     const handleNextChapter = () => {
-        if (currentChapterNum < totalChapters || totalChapters === 1) {
-            router.replace({
-                pathname: `/reader/${storyId}/read/${currentChapterNum + 1}` as any,
-                params: { storyTitle }
-            });
+        if (totalChapters > 0 && currentChapterNum >= totalChapters) return;
+
+        const isUnlocked = getChapterStatus(currentChapterNum + 1);
+        if (!isUnlocked) {
+            showToast("This chapter is locked. Please purchase it first.", "error");
+            return;
         }
+
+        router.replace({
+            pathname: `/reader/${storyId}/read/${currentChapterNum + 1}` as any,
+            params: { storyTitle }
+        });
     };
 
     if (loading) {
@@ -101,7 +148,8 @@ export default function ReaderScreen() {
         );
     }
 
-    const displayTotalChapters = totalChapters > 1 ? totalChapters : (chapter.totalChapters || '?');
+    const displayTotalChapters = totalChapters > 0 ? totalChapters : '...';
+    const nextChapterUnlocked = getChapterStatus(currentChapterNum + 1);
 
     return (
         <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
@@ -164,10 +212,14 @@ export default function ReaderScreen() {
 
                 <TouchableOpacity
                     onPress={handleNextChapter}
-                    disabled={totalChapters > 1 && currentChapterNum >= totalChapters}
-                    className={`nav-button p-2 ${(totalChapters > 1 && currentChapterNum >= totalChapters) ? 'opacity-30' : 'opacity-100'}`}
+                    disabled={totalChapters > 0 && currentChapterNum >= totalChapters}
+                    className={`nav-button p-2 ${(totalChapters > 0 && currentChapterNum >= totalChapters) ? 'opacity-30' : 'opacity-100'}`}
                 >
-                    <ChevronRight color={colors.icon} size={24} />
+                    {nextChapterUnlocked ? (
+                        <ChevronRight color={colors.icon} size={24} />
+                    ) : (
+                        <Lock color={colors.accent} size={20} />
+                    )}
                 </TouchableOpacity>
             </View>
         </SafeAreaView>

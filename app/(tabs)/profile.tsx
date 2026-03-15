@@ -11,6 +11,7 @@ import SideMenu from "@/components/SideMenu";
 import AppHeader from "@/components/AppHeader";
 import SignInPromptScreen from "@/components/SignInPromptScreen";
 import Settings from "@/components/Settings";
+import { useToast } from "@/context/ToastContext";
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 48 - 16) / 2; // (Screen width - horizontal padding - gap) / 2
@@ -18,6 +19,7 @@ const cardWidth = (width - 48 - 16) / 2; // (Screen width - horizontal padding -
 export default function ProfileScreen() {
     const { signOut, user, isLoading: authLoading } = useAuth();
     const { toggleTheme, isDarkMode, colors } = useTheme();
+    const { showToast } = useToast();
     const [profileData, setProfileData] = useState<any>(null);
     const [likedStories, setLikedStories] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -53,7 +55,12 @@ export default function ProfileScreen() {
     };
 
     const handleSignOut = async () => {
-        await signOut();
+        try {
+            await signOut();
+            showToast("Signed out successfully", "info");
+        } catch (error) {
+            showToast("Failed to sign out", "error");
+        }
     };
 
     const renderHeader = () => {

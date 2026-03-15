@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, SafeAreaView, Alert } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { AuthService } from '../../services/auth.service';
 import { useAuth } from '@/context/AuthContext';
 import AppHeader from '@/components/AppHeader';
+import { useToast } from '@/context/ToastContext';
 
 export default function LoginScreen() {
     const router = useRouter();
     const { signIn } = useAuth();
+    const { showToast } = useToast();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -17,7 +19,7 @@ export default function LoginScreen() {
 
     const handleLogin = async () => {
         if (!email || !password) {
-            Alert.alert("Error", "Please fill in all fields");
+            showToast("Please fill in all fields", "error");
             return;
         }
 
@@ -25,9 +27,10 @@ export default function LoginScreen() {
         try {
             const data = await AuthService.login(email, password);
             await signIn(data.token);
+            showToast("Login successful", "success");
             // success animation could be here
         } catch (error: any) {
-            Alert.alert("Login Failed", error.message || "Invalid credentials");
+            showToast(error.message || "Invalid credentials", "error");
         } finally {
             setLoading(false);
         }
