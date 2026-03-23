@@ -88,12 +88,6 @@ export default function Settings({ profileData, setProfileData, handleSignOut }:
                     <Text className="font-inter" style={{ color: colors.text }}>********</Text>
                 </TouchableOpacity>
                 
-                <View className="flex-row justify-between items-center pt-4">
-                    <Text className="font-inter" style={{ color: colors.subtext }}>Balance</Text>
-                    <View className="flex-row items-center">
-                        <Text className="font-inter font-bold" style={{ color: colors.accent }}>💎 {profileData?.balance || 75} stones</Text>
-                    </View>
-                </View>
             </View>
 
             <TouchableOpacity 

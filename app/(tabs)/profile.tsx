@@ -22,37 +22,58 @@ export default function ProfileScreen() {
     const { showToast } = useToast();
     const [profileData, setProfileData] = useState<any>(null);
     const [likedStories, setLikedStories] = useState<any[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [profileLoading, setProfileLoading] = useState(false);
+    const [favoritesLoading, setFavoritesLoading] = useState(false);
+    const [favoritesError, setFavoritesError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState('favorites');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     useEffect(() => {
         if (user && !authLoading) {
-            fetchProfileAndStories();
+            fetchProfile();
         }
     }, [user, authLoading]);
 
-    const fetchProfileAndStories = async () => {
+    const fetchProfile = async () => {
         try {
-            setLoading(true);
-            const [profileRes, likedRes] = await Promise.all([
-                AuthService.getProfile(),
-                AppService.getLikedStories()
-            ]);
+            setProfileLoading(true);
+            const profileRes = await AuthService.getProfile();
 
             if (profileRes && profileRes.user) {
                 setProfileData(profileRes.user);
             }
-
-            if (likedRes && likedRes.result && likedRes.result.length > 0) {
-                setLikedStories(likedRes.result[0].stories || []);
-            }
         } catch (error) {
             console.error("Error fetching profile data:", error);
         } finally {
-            setLoading(false);
+            setProfileLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (!user || authLoading) return;
+        if (activeTab !== "favorites") return;
+
+        let cancelled = false;
+        const run = async () => {
+            try {
+                setFavoritesError(null);
+                setFavoritesLoading(true);
+                const likedRes = await AppService.getLikedStories();
+                const stories = likedRes?.result?.[0]?.stories ?? [];
+                if (!cancelled) setLikedStories(stories);
+            } catch (e) {
+                console.error("Error fetching liked stories:", e);
+                if (!cancelled) setFavoritesError("Something went wrong. Please try again.");
+            } finally {
+                if (!cancelled) setFavoritesLoading(false);
+            }
+        };
+
+        run();
+        return () => {
+            cancelled = true;
+        };
+    }, [activeTab, user, authLoading]);
 
     const handleSignOut = async () => {
         try {
@@ -64,7 +85,7 @@ export default function ProfileScreen() {
     };
 
     const renderHeader = () => {
-        if (loading || !profileData) return (
+        if (profileLoading || !profileData) return (
             <View className="py-10">
                 <ActivityIndicator size="large" color={colors.accent} />
             </View>
@@ -148,16 +169,34 @@ export default function ProfileScreen() {
     };
 
     const renderFlatListContent = () => {
-        if (loading && !profileData) {
+        if (profileLoading && !profileData) {
             return null; // Handled in header
         }
 
         if (activeTab === 'favorites') {
+            if (favoritesLoading) {
+                return (
+                    <View className="py-10">
+                        <ActivityIndicator size="large" color={colors.accent} />
+                    </View>
+                );
+            }
+
+            if (favoritesError) {
+                return (
+                    <View className="py-16 items-center flex-1 px-6">
+                        <Text className="font-inter text-center" style={{ color: colors.subtext }}>
+                            {favoritesError}
+                        </Text>
+                    </View>
+                );
+            }
+
             if (likedStories.length === 0) {
                 return (
                     <View className="py-16 items-center flex-1">
                         <Text className="font-inter text-center mb-4" style={{ color: colors.subtext }}>
-                            Bạn chưa yêu thích truyện nào
+                            No favorites yet
                         </Text>
                         <TouchableOpacity
                             className="px-6 py-2 rounded-full"

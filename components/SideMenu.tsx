@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, Modal, Animated, Dimensions, TouchableWithoutFeedback, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, Animated, Dimensions, TouchableWithoutFeedback, StyleSheet, Platform } from 'react-native';
 import { BookOpen, Sun, Moon, X, Home, Search as SearchIcon, Library, User } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { AuthService } from '@/services/auth.service';
@@ -21,6 +21,7 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
     const { colors, toggleTheme, isDarkMode } = useTheme();
     const [token, setToken] = useState<string | null>(null);
     const [isVisible, setIsVisible] = useState(isOpen);
+    const useNativeDriver = Platform.OS !== 'web';
 
     useEffect(() => {
         const checkToken = async () => {
@@ -34,13 +35,13 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
             Animated.timing(slideAnim, {
                 toValue: 0,
                 duration: 250,
-                useNativeDriver: true,
+                useNativeDriver,
             }).start();
         } else {
             Animated.timing(slideAnim, {
                 toValue: -MENU_HEIGHT,
                 duration: 250,
-                useNativeDriver: true,
+                useNativeDriver,
             }).start(() => {
                 setIsVisible(false);
             });
@@ -157,11 +158,15 @@ const styles = StyleSheet.create({
         paddingTop: 56, // Padding cho tai thỏ/status bar
         paddingHorizontal: 16,
         paddingBottom: 24,
-        shadowColor: '#000',
-        shadowOffset: { width: 4, height: 0 },
-        shadowOpacity: 0.3,
-        shadowRadius: 10,
-        elevation: 10,
+        ...(Platform.OS === 'web'
+            ? { boxShadow: '0px 6px 18px rgba(0,0,0,0.30)' }
+            : {
+                shadowColor: '#000',
+                shadowOffset: { width: 4, height: 0 },
+                shadowOpacity: 0.3,
+                shadowRadius: 10,
+                elevation: 10,
+            }),
         zIndex: 10,
     }
 });

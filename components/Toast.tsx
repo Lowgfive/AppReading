@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Text, View, StyleSheet } from 'react-native';
+import { Animated, Text, View, StyleSheet, Platform } from 'react-native';
 import { useTheme } from '@/context/ThemeContext';
 import { CheckCircle2, XCircle, Info } from 'lucide-react-native';
 
@@ -16,6 +16,7 @@ export const Toast: React.FC<ToastProps> = ({ message, type = 'info', visible, o
     const { colors } = useTheme();
     const opacity = useRef(new Animated.Value(0)).current;
     const translateY = useRef(new Animated.Value(-20)).current;
+    const useNativeDriver = Platform.OS !== 'web';
 
     useEffect(() => {
         if (visible) {
@@ -23,11 +24,11 @@ export const Toast: React.FC<ToastProps> = ({ message, type = 'info', visible, o
                 Animated.timing(opacity, {
                     toValue: 1,
                     duration: 300,
-                    useNativeDriver: true,
+                    useNativeDriver,
                 }),
                 Animated.spring(translateY, {
                     toValue: 0,
-                    useNativeDriver: true,
+                    useNativeDriver,
                 }),
             ]).start();
 
@@ -46,12 +47,12 @@ export const Toast: React.FC<ToastProps> = ({ message, type = 'info', visible, o
             Animated.timing(opacity, {
                 toValue: 0,
                 duration: 300,
-                useNativeDriver: true,
+                useNativeDriver,
             }),
             Animated.timing(translateY, {
                 toValue: -20,
                 duration: 300,
-                useNativeDriver: true,
+                useNativeDriver,
             }),
         ]).start(() => {
             if (visible) onHide();
@@ -105,11 +106,15 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 12,
         borderWidth: 1,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
-        elevation: 5,
+        ...(Platform.OS === 'web'
+            ? { boxShadow: '0px 4px 12px rgba(0,0,0,0.15)' }
+            : {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.15,
+                shadowRadius: 12,
+                elevation: 5,
+            }),
         zIndex: 9999,
     },
     iconContainer: {

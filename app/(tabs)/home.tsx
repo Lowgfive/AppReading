@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { View, Text, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Animated } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Animated, Platform } from "react-native";
 import { useAuth } from "@/context/AuthContext";
 import { AppService } from "@/services/app.service";
 import { router } from "expo-router";
@@ -17,6 +17,7 @@ export default function HomeScreen() {
     const skeletonOpacity = useRef(new Animated.Value(1)).current;
     const [homeData, setHomeData] = useState<any>(null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const useNativeDriver = Platform.OS !== 'web';
 
     useEffect(() => {
         fetchData();
@@ -35,7 +36,7 @@ export default function HomeScreen() {
             Animated.timing(skeletonOpacity, {
                 toValue: 0,
                 duration: 300,
-                useNativeDriver: true,
+                useNativeDriver,
             }).start();
         }
     };

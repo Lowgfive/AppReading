@@ -19,40 +19,58 @@ type LibraryItem = {
 export default function LibraryScreen() {
     const { colors } = useTheme();
     const { user, isLoading: authLoading } = useAuth();
-    const [items, setItems] = useState<LibraryItem[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [activeFilter, setActiveFilter] = useState<"favorites" | "continue" | "completed" | "ongoing">("continue");
+    const [historyItems, setHistoryItems] = useState<LibraryItem[]>([]);
+    const [likedStories, setLikedStories] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [activeFilter, setActiveFilter] = useState<"favorites" | "history" | "completed" | "ongoing">("history");
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     useEffect(() => {
-        const fetchLibrary = async () => {
+        if (!user || authLoading) return;
+
+        let cancelled = false;
+        const run = async () => {
             try {
+                setError(null);
                 setLoading(true);
-                const data = await AppService.getLibrary();
-                setItems(data || []);
-            } catch (error) {
-                console.error("Error fetching library:", error);
+
+                if (activeFilter === "favorites") {
+                    const likedRes = await AppService.getLikedStories();
+                    const stories = likedRes?.result?.[0]?.stories ?? [];
+                    if (!cancelled) setLikedStories(stories);
+                } else {
+                    const data = await AppService.getLibrary();
+                    if (!cancelled) setHistoryItems(data || []);
+                }
+            } catch (e) {
+                console.error("Error fetching library data:", e);
+                if (!cancelled) setError("Something went wrong. Please try again.");
             } finally {
-                setLoading(false);
+                if (!cancelled) setLoading(false);
             }
         };
 
-        fetchLibrary();
-    }, []);
+        run();
+        return () => {
+            cancelled = true;
+        };
+    }, [activeFilter, user, authLoading]);
 
     const filteredItems = useMemo(() => {
-        if (!items || items.length === 0) return [];
+        if (activeFilter === "favorites") return [];
+        if (!historyItems || historyItems.length === 0) return [];
 
         switch (activeFilter) {
             case "completed":
-                return items.filter((item) => item.story?.status === "COMPLETED");
+                return historyItems.filter((item) => item.story?.status === "COMPLETED");
             case "ongoing":
-                return items.filter((item) => item.story?.status !== "COMPLETED");
-            // "favorites" and "continue" can later be refined when we have more data
+                return historyItems.filter((item) => item.story?.status !== "COMPLETED");
+            case "history":
             default:
-                return items;
+                return historyItems;
         }
-    }, [items, activeFilter]);
+    }, [historyItems, activeFilter]);
 
     if (authLoading) {
         return (
@@ -66,6 +84,8 @@ export default function LibraryScreen() {
         return <SignInPromptScreen />;
     }
 
+    const showFavorites = activeFilter === "favorites";
+
     return (
         <View className="flex-1" style={{ backgroundColor: colors.background }}>
             <AppHeader onMenuPress={() => setIsMenuOpen(true)} />
@@ -76,7 +96,19 @@ export default function LibraryScreen() {
                         <SkeletonStoryCard key={i} />
                     ))}
                 </ScrollView>
-            ) : items.length === 0 ? (
+            ) : error ? (
+                <View className="flex-1 justify-center items-center px-6">
+                    <Text className="font-inter text-base text-center" style={{ color: colors.subtext }}>
+                        {error}
+                    </Text>
+                </View>
+            ) : showFavorites && likedStories.length === 0 ? (
+                <View className="flex-1 justify-center items-center px-6">
+                    <Text className="font-inter text-base text-center" style={{ color: colors.subtext }}>
+                        No favorites yet
+                    </Text>
+                </View>
+            ) : !showFavorites && historyItems.length === 0 ? (
                 <View className="flex-1 justify-center items-center px-6">
                     <Text className="font-inter text-base text-center" style={{ color: colors.subtext }}>
                         Bạn chưa có truyện nào trong thư viện đọc. Hãy bắt đầu đọc để lưu lịch sử tại đây.
@@ -94,7 +126,7 @@ export default function LibraryScreen() {
                     <View className="mb-6 flex-row"  style={{ backgroundColor: colors.card }}>
                         {[
                             { key: "favorites", label: "Favorites" },
-                            { key: "continue", label: "Continue Reading" },
+                            { key: "history", label: "History" },
                             { key: "completed", label: "Complete" },
                         ].map((tab) => {
                             const isActive = activeFilter === tab.key;
@@ -119,26 +151,40 @@ export default function LibraryScreen() {
                     </View>
 
                     <View className="flex-row flex-wrap justify-between">
-                        {filteredItems.map((item) => (
-                            <View key={item.story._id} className="mb-6 w-[47%]">
-                                <StoryCard
-                                    story={item.story}
-                                    onPress={() =>
-                                        router.push({
-                                            pathname: `/story/${item.story._id}` as any,
-                                            params: { storyData: JSON.stringify(item.story) }
-                                        })
-                                    }
-                                />
-                                <Text
-                                    className="mt-1 text-xs font-inter"
-                                    style={{ color: colors.subtext }}
-                                    numberOfLines={1}
-                                >
-                                    Đang đọc: Chương {item.lastChapterNumber} / {item.story.totalChapters || "?"}
-                                </Text>
-                            </View>
-                        ))}
+                        {showFavorites
+                            ? likedStories.map((story: any) => (
+                                <View key={story._id} className="mb-6 w-[47%]">
+                                    <StoryCard
+                                        story={story}
+                                        onPress={() =>
+                                            router.push({
+                                                pathname: `/story/${story._id}` as any,
+                                                params: { storyData: JSON.stringify(story) }
+                                            })
+                                        }
+                                    />
+                                </View>
+                            ))
+                            : filteredItems.map((item) => (
+                                <View key={item.story._id} className="mb-6 w-[47%]">
+                                    <StoryCard
+                                        story={item.story}
+                                        onPress={() =>
+                                            router.push({
+                                                pathname: `/story/${item.story._id}` as any,
+                                                params: { storyData: JSON.stringify(item.story) }
+                                            })
+                                        }
+                                    />
+                                    <Text
+                                        className="mt-1 text-xs font-inter"
+                                        style={{ color: colors.subtext }}
+                                        numberOfLines={1}
+                                    >
+                                        Đang đọc: Chương {item.lastChapterNumber} / {item.story.totalChapters || "?"}
+                                    </Text>
+                                </View>
+                            ))}
                     </View>
                 </ScrollView>
             )}

@@ -32,7 +32,7 @@ export default function AppHeader({ onMenuPress }: AppHeaderProps) {
 
   return (
     <View
-      className="flex-row justify-between items-center px-4 py-4 border-b"
+      className="flex-row justify-between items-center px-4 py-4 border-b mt-10"
       style={{ borderBottomColor: colors.border, backgroundColor: colors.background }}
     >
       <View className="flex-row items-center gap-2">

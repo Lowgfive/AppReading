@@ -8,6 +8,7 @@ import {
     ActivityIndicator,
     Animated,
     Modal,
+    Platform,
 } from "react-native";
 import { useTheme } from "@/context/ThemeContext";
 import AppHeader from "@/components/AppHeader";
@@ -42,6 +43,7 @@ export default function SearchScreen() {
     const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
     const [selectedStatus, setSelectedStatus] = useState<string | undefined>(undefined);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const useNativeDriver = Platform.OS !== 'web';
 
     const loadStories = async (reset: boolean = false) => {
         setLoading(true);
@@ -59,7 +61,7 @@ export default function SearchScreen() {
             console.error(e);
         } finally {
             setLoading(false);
-            Animated.timing(skeletonOpacity, { toValue: 0, duration: 300, useNativeDriver: true }).start();
+            Animated.timing(skeletonOpacity, { toValue: 0, duration: 300, useNativeDriver }).start();
         }
     };
 
