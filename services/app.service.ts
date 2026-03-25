@@ -58,6 +58,43 @@ export const AppService = {
         });
         return res.data;
     },
+    async getChapterComments(chapterId: string) {
+        const res = await axios.get(`${API_URL}/comments`, {
+            params: { chapterId }
+        });
+        return res.data;
+    },
+    async createChapterComment(chapterId: string, content: string) {
+        const token = await AuthService.getToken();
+        const res = await axios.post(`${API_URL}/comments`, {
+            chapterId,
+            content
+        }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return res.data;
+    },
+    async getAdminDashboard() {
+        const token = await AuthService.getToken();
+        const res = await axios.get(`${API_URL}/admin/dashboard`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return res.data;
+    },
+    async createAdminStory(payload: {
+        title: string;
+        author: string;
+        description: string;
+        coverImageUrl: string;
+        status: 'ongoing' | 'completed';
+        genres: string[];
+    }) {
+        const token = await AuthService.getToken();
+        const res = await axios.post(`${API_URL}/admin/stories`, payload, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return res.data;
+    },
     async getLikedStories() {
         const token = await AuthService.getToken();
         const res = await axios.get(`${API_URL}/stories/getLikeStory`, {

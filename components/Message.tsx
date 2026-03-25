@@ -1,5 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Image, KeyboardAvoidingView, Platform, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  FlatList,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { io, Socket } from "socket.io-client";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
@@ -7,20 +16,41 @@ import { useTheme } from "@/context/ThemeContext";
 import { API_URL } from "@/services/app.service";
 import { useToast } from "@/context/ToastContext";
 
+type ChatUser = {
+  _id: string;
+  username: string;
+  avatar?: string;
+};
+
 type ChatMessage = {
   _id: string;
   content: string;
   createdAt: string;
-  userId: {
-    _id: string;
-    username: string;
-    avatar?: string;
-  };
+  userId: ChatUser | null;
 };
 
 type Props = {
   roomId: string;
 };
+
+const FALLBACK_USER: ChatUser = {
+  _id: "unknown-user",
+  username: "Unknown User",
+  avatar: "",
+};
+
+const normalizeMessage = (message: any): ChatMessage => ({
+  _id: message?._id || `${Date.now()}`,
+  content: message?.content || "",
+  createdAt: message?.createdAt || new Date().toISOString(),
+  userId: message?.userId
+    ? {
+        _id: message.userId._id || FALLBACK_USER._id,
+        username: message.userId.username || FALLBACK_USER.username,
+        avatar: message.userId.avatar || FALLBACK_USER.avatar,
+      }
+    : FALLBACK_USER,
+});
 
 export default function Message({ roomId }: Props) {
   const { user, token } = useAuth();
@@ -28,12 +58,14 @@ export default function Message({ roomId }: Props) {
   const { showToast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
+  const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<Socket | null>(null);
 
-  const [isConnected, setIsConnected] = useState(false);
-
   const sortedMessages = useMemo(() => {
-    return [...messages].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    return [...messages].sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
   }, [messages]);
 
   useEffect(() => {
@@ -47,7 +79,7 @@ export default function Message({ roomId }: Props) {
             : undefined,
         });
 
-        setMessages(res.data.data || []);
+        setMessages((res.data.data || []).map(normalizeMessage));
       } catch (error) {
         console.warn("Failed to load chat messages", error);
       }
@@ -58,7 +90,7 @@ export default function Message({ roomId }: Props) {
 
   useEffect(() => {
     const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_URL || API_URL.replace("/api", "");
-    
+
     const socket = io(SOCKET_URL, {
       transports: ["websocket"],
       forceNew: true,
@@ -68,58 +100,48 @@ export default function Message({ roomId }: Props) {
     socketRef.current = socket;
 
     socket.on("connect", () => {
-      console.log("✅ Connected to Socket.IO server");
       setIsConnected(true);
       socket.emit("join_room", roomId);
     });
 
     socket.on("disconnect", () => {
-      console.log("❌ Disconnected from Socket.IO server");
       setIsConnected(false);
     });
 
     socket.on("connect_error", (err) => {
-      console.error("❌ Socket Connection Error:", err.message);
+      console.error("Socket connection error:", err.message);
       setIsConnected(false);
       showToast("Chat connection error. Please try again later.", "error");
     });
 
     socket.on("receive_message", (message: ChatMessage) => {
-      console.log("📩 New message received:", message);
-      setMessages((prev) => [...prev, message]);
+      setMessages((prev) => [...prev, normalizeMessage(message)]);
     });
 
     return () => {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [roomId, token]);
+  }, [roomId, showToast, token]);
 
   const handleSend = () => {
-    console.log("Attempting to send message...");
-    console.log("Draft:", draft);
-    console.log("User ID:", user?._id);
-    console.log("Is Connected:", isConnected);
-
     if (!draft.trim() || !user || !socketRef.current || !isConnected) {
-      console.warn("Cannot send: Missing draft, user, or active connection");
       return;
     }
 
-    const payload = {
+    socketRef.current.emit("send_message", {
       content: draft.trim(),
       userId: user._id,
       roomId,
-    };
-
-    console.log("📤 Emitting send_message with payload:", payload);
-    socketRef.current.emit("send_message", payload);
+    });
 
     setDraft("");
   };
 
   const renderItem = ({ item }: { item: ChatMessage }) => {
-    const isMe = item.userId._id === user?._id;
+    const messageUser = item.userId || FALLBACK_USER;
+    const isMe = messageUser._id === user?._id;
+
     return (
       <View
         className={`mb-3 flex-row ${isMe ? "justify-end" : "justify-start"}`}
@@ -127,11 +149,12 @@ export default function Message({ roomId }: Props) {
       >
         {!isMe && (
           <Image
-            source={{ uri: item.userId.avatar || "https://via.placeholder.com/40" }}
+            source={{ uri: messageUser.avatar || "https://via.placeholder.com/40" }}
             className="h-10 w-10 rounded-full mr-3"
             style={{ backgroundColor: colors.border }}
           />
         )}
+
         <View
           className="rounded-2xl p-3 max-w-[80%]"
           style={{
@@ -141,7 +164,7 @@ export default function Message({ roomId }: Props) {
           }}
         >
           <Text className="font-semibold" style={{ color: colors.text }}>
-            {item.userId.username}
+            {messageUser.username}
           </Text>
           <Text className="mt-1" style={{ color: colors.text }}>
             {item.content}
@@ -170,7 +193,11 @@ export default function Message({ roomId }: Props) {
 
       <View
         className="flex-row items-center px-4 py-3"
-        style={{ backgroundColor: colors.card, borderTopColor: colors.border, borderTopWidth: 1 }}
+        style={{
+          backgroundColor: colors.card,
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
+        }}
       >
         <TextInput
           value={draft}

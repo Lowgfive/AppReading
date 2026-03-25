@@ -3,6 +3,7 @@ import { View, Text, ScrollView, ImageBackground, TouchableOpacity, ActivityIndi
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Play, Heart, Star, Eye, BookOpen, Clock, ChevronRight, ChevronLeft, Lock, Gem } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppService } from '@/services/app.service';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
@@ -16,6 +17,7 @@ export default function StoryDetailScreen() {
     const { colors, isDarkMode } = useTheme();
     const { user } = useAuth();
     const { showToast } = useToast();
+    const insets = useSafeAreaInsets();
     
     // Defaulting context to empty objects/functions in case it's not wrapped (though it is)
     const appContext = useContext(AppContext);
@@ -187,7 +189,13 @@ export default function StoryDetailScreen() {
 
     return (
         <View className="flex-1" style={{ backgroundColor: colors.background }}>
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false} bounces={false} keyboardShouldPersistTaps="handled">
+            <ScrollView
+                className="flex-1"
+                showsVerticalScrollIndicator={false}
+                bounces={false}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 24, 36) }}
+            >
                 <View className="w-full h-[400px]">
                     {story.image ? (
                         <ImageBackground
@@ -197,7 +205,8 @@ export default function StoryDetailScreen() {
                         >
                             <LinearGradient
                                 colors={gradientColors}
-                                className="w-full h-full px-5 pt-14 pb-4 justify-between"
+                                className="w-full h-full px-5 pb-4 justify-between"
+                                style={{ paddingTop: Math.max(insets.top + 10, 22) }}
                             >
                                 <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full items-center justify-center" style={{ backgroundColor: colors.overlay }}>
                                     <ChevronLeft color={colors.text} size={24} />
@@ -244,7 +253,8 @@ export default function StoryDetailScreen() {
                     ) : (
                         <LinearGradient
                             colors={fallbackGradientColors}
-                            className="w-full h-full px-5 pt-14 pb-4 justify-between"
+                            className="w-full h-full px-5 pb-4 justify-between"
+                            style={{ paddingTop: Math.max(insets.top + 10, 22) }}
                         >
                             <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full items-center justify-center" style={{ backgroundColor: colors.overlay }}>
                                 <ChevronLeft color={colors.text} size={24} />
@@ -291,7 +301,7 @@ export default function StoryDetailScreen() {
                 </View>
 
                 {/* Content Section */}
-                <View className="px-6 py-2">
+                <View className="px-6 pt-5 pb-2">
                     <Text className="text-[15px] leading-[26px] mb-7 font-inter" style={{ color: colors.text }}>
                         {story.description || "In a world where books have become forbidden, one librarian guards the last sanctuary of stories. When a mysterious stranger arrives seeking a particular volume, she must decide whether to protect her secrets or risk everything for the truth."}
                     </Text>

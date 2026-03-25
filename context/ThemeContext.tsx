@@ -36,6 +36,7 @@ export const themeColors = {
 type ThemeContextType = {
     theme: ThemeType;
     toggleTheme: () => void;
+    setTheme: (theme: ThemeType) => void;
     isDarkMode: boolean;
     colors: typeof themeColors.light;
 };
@@ -53,7 +54,7 @@ export function ThemeProvider({ children }: PropsWithChildren) {
     const colors = isDarkMode ? themeColors.dark : themeColors.light;
 
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme, isDarkMode, colors }}>
+        <ThemeContext.Provider value={{ theme, toggleTheme, setTheme, isDarkMode, colors }}>
             {children}
         </ThemeContext.Provider>
     );

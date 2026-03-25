@@ -2,7 +2,7 @@ import { AppService } from "@/services/app.service";
 import { Story } from "@/types/story.type";
 import { createContext, PropsWithChildren, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
-import { Toast } from "@/components/Toast";
+import { useToast } from "./ToastContext";
 type ToastType = 'success' | 'error' | 'info';
 
 type AppContextType = {
@@ -20,25 +20,11 @@ export const AppContext = createContext<AppContextType | null>(null);
 
 export default function AppProvider({ children }: PropsWithChildren) {
     const { user } = useAuth();
+    const { showToast } = useToast();
 
     const [openLogin, setOpenLogin] = useState<boolean | null>(false)
     const [dataStory, setDataStory] = useState<Array<Story>>([]);
     const [balance, setBalance] = useState<number | null>(null);
-    
-    // Toast State
-    const [toastVisible, setToastVisible] = useState(false);
-    const [toastMessage, setToastMessage] = useState('');
-    const [toastType, setToastType] = useState<ToastType>('info');
-
-    const showToast = (message: string, type: ToastType = 'info') => {
-        setToastMessage(message);
-        setToastType(type);
-        setToastVisible(true);
-    };
-
-    const hideToast = () => {
-        setToastVisible(false);
-    };
 
     const data = async () => {
         try {
@@ -47,7 +33,7 @@ export default function AppProvider({ children }: PropsWithChildren) {
                 setDataStory(data.story);
             }
         } catch (error) {
-
+            console.log(error)
         }
     }
 
@@ -75,14 +61,6 @@ export default function AppProvider({ children }: PropsWithChildren) {
     return (
         <AppContext.Provider value={{ openLogin, setOpenLogin, dataStory, setDataStory, balance, setBalance, fetchBalance, showToast }}>
             {children}
-            <Toast 
-                visible={toastVisible} 
-                message={toastMessage} 
-                type={toastType} 
-                onHide={hideToast} 
-            />
         </AppContext.Provider>
     )
 }
-
-// Ensure you import the Toast component at the top of this file

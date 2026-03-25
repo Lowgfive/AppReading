@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { AuthService } from "@/services/auth.service";
 import { AppService } from "@/services/app.service";
 import { router } from "expo-router";
-import { Sun, Moon, Menu, LogOut, Edit2 } from "lucide-react-native";
+import { Sun, Moon, Menu, LogOut, Edit2, Shield } from "lucide-react-native";
 import { useTheme } from "@/context/ThemeContext";
 import StoryCard from "@/components/StoryCard";
 import SideMenu from "@/components/SideMenu";
@@ -140,6 +140,19 @@ export default function ProfileScreen() {
                         <LogOut color={colors.icon} size={18} className="mr-2" />
                         <Text className="font-inter font-bold" style={{ color: colors.text }}>Sign Out</Text>
                     </TouchableOpacity>
+
+                    {profileData.role === 'admin' && (
+                        <TouchableOpacity
+                            onPress={() => router.push('/admin' as any)}
+                            className="flex-row items-center justify-center px-6 py-3 rounded-full mb-8"
+                            style={{ backgroundColor: colors.accent }}
+                        >
+                            <Shield color="#111111" size={18} />
+                            <Text className="font-inter font-bold ml-2" style={{ color: '#111111' }}>
+                                Open Admin Dashboard
+                            </Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
 
                 {/* Tabs */}
