@@ -130,6 +130,19 @@ export const AppService = {
         });
         return res.data;
     },
+    async getTopupPackages() {
+        const res = await axios.get(`${API_URL}/v1/payments/packages`);
+        return res.data;
+    },
+    async createVnpayPaymentUrl(amount: number) {
+        const token = await AuthService.getToken();
+        const res = await axios.post(`${API_URL}/v1/payments/vnpay/create-payment-url`, {
+            amount
+        }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return res.data;
+    },
     async unlockChapter(storyId: string, chapterId: string) {
         const token = await AuthService.getToken();
         const response = await axios.post(`${API_URL}/chapters/unlockChapter`, {
