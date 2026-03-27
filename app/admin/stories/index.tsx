@@ -181,7 +181,18 @@ export default function AdminStoriesScreen() {
                                         >
                                             <Pencil color={colors.text} size={18} />
                                         </TouchableOpacity>
-                                        <TouchableOpacity className="mr-5">
+                                        <TouchableOpacity
+                                            className="mr-5"
+                                            onPress={() =>
+                                                router.push({
+                                                    pathname: '/admin/stories/chapters/create' as any,
+                                                    params: {
+                                                        storyId: story._id,
+                                                        storyTitle: title,
+                                                    }
+                                                })
+                                            }
+                                        >
                                             <BookOpen color={colors.text} size={18} />
                                         </TouchableOpacity>
                                         <TouchableOpacity>

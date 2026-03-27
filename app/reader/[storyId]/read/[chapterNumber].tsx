@@ -399,7 +399,7 @@ export default function ReaderScreen() {
     const contentLineHeight = readerFontSize * 1.8;
 
     return (
-        <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
+        <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background, paddingTop: 10 }}>
             <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
             <View className="flex-row items-center justify-between px-4 py-3 border-b" style={{ borderBottomColor: colors.border }}>

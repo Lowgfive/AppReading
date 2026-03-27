@@ -7,7 +7,7 @@ import { AppService } from '@/services/app.service';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Platform, ScrollView, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView } from 'react-native';
 
 const GENRE_OPTIONS = [
     'Fantasy',
@@ -141,9 +141,15 @@ export default function CreateStoryScreen() {
     return (
         <View className="flex-1" style={{ backgroundColor: colors.background }}>
             <AppHeader />
+            <KeyboardAvoidingView
+                className="flex-1"
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
+            >
             <ScrollView
                 className="flex-1"
                 showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
                 contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 18, paddingBottom: 32 }}
             >
                 <Text className="text-4xl font-bold" style={{ color: colors.text }}>
@@ -167,6 +173,8 @@ export default function CreateStoryScreen() {
                             onChangeText={setTitle}
                             placeholder="Nhập tiêu đề truyện"
                             placeholderTextColor={colors.subtext}
+                            autoCorrect={false}
+                            returnKeyType="next"
                             className="rounded-2xl px-4 py-4 text-[15px]"
                             style={{ backgroundColor: colors.background, color: colors.text, borderWidth: 1, borderColor: colors.border }}
                         />
@@ -181,6 +189,8 @@ export default function CreateStoryScreen() {
                             onChangeText={setAuthor}
                             placeholder="Nhập tên tác giả"
                             placeholderTextColor={colors.subtext}
+                            autoCorrect={false}
+                            returnKeyType="next"
                             className="rounded-2xl px-4 py-4 text-[15px]"
                             style={{ backgroundColor: colors.background, color: colors.text, borderWidth: 1, borderColor: colors.border }}
                         />
@@ -197,6 +207,7 @@ export default function CreateStoryScreen() {
                             placeholderTextColor={colors.subtext}
                             multiline
                             textAlignVertical="top"
+                            autoCorrect={false}
                             className="rounded-2xl px-4 py-4 text-[15px] min-h-[140px]"
                             style={{ backgroundColor: colors.background, color: colors.text, borderWidth: 1, borderColor: colors.border }}
                         />
@@ -288,6 +299,7 @@ export default function CreateStoryScreen() {
                     </TouchableOpacity>
                 </View>
             </ScrollView>
+            </KeyboardAvoidingView>
         </View>
     );
 }

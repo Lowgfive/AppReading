@@ -158,7 +158,10 @@ export default function StoryDetailScreen() {
         );
     }
 
-    const author = story.userId?.username || "Unknown author";
+    const author =
+        typeof story.author === "string"
+            ? story.author.trim() || story.userId?.username || "Unknown author"
+            : story.author?.name || story.userId?.username || "Unknown author";
     const likes = story.likeCount || 0;
     const views = story.viewCount >= 1000 ? `${(story.viewCount / 1000).toFixed(1)}K` : (story.viewCount || 0);
 

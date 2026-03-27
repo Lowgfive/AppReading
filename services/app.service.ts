@@ -57,6 +57,20 @@ export const AppService = {
         });
         return res.data;
     },
+    async createChapter(payload: {
+        storyId: string;
+        chapters: Array<{
+            chapterNumber: number;
+            title: string;
+            content: string;
+        }>;
+    }) {
+        const token = await AuthService.getToken();
+        const res = await axios.post(`${API_URL}/chapters/createChapter`, payload, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return res.data;
+    },
     async getChapterContent(storyId: string, chapterNumber: number) {
         let token = null;
         try {

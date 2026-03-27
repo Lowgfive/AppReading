@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { AuthService } from '../../services/auth.service';
@@ -45,75 +45,97 @@ export default function LoginScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <AppHeader />
-            <View style={styles.content}>
-                {formReady ? (
-                    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                        <View style={styles.inputContainer}>
-                            <Text style={[styles.label, { color: colors.text }]}>Email</Text>
-                            <View style={[styles.inputWrapper, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
-                                <Mail size={20} color={colors.iconMuted} style={styles.inputIcon} />
-                                <TextInput
-                                    style={[styles.input, { color: colors.text }]}
-                                    placeholder="Enter your email"
-                                    placeholderTextColor={colors.iconMuted}
-                                    keyboardType="email-address"
-                                    autoCapitalize="none"
-                                    value={email}
-                                    onChangeText={setEmail}
-                                />
-                            </View>
-                        </View>
+            <KeyboardAvoidingView
+                style={styles.container}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
+            >
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View style={styles.content}>
+                        {formReady ? (
+                            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                                <View style={styles.inputContainer}>
+                                    <Text style={[styles.label, { color: colors.text }]}>Email</Text>
+                                    <View style={[styles.inputWrapper, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+                                        <Mail size={20} color={colors.iconMuted} style={styles.inputIcon} />
+                                        <TextInput
+                                            style={[styles.input, { color: colors.text }]}
+                                            placeholder="Enter your email"
+                                            placeholderTextColor={colors.iconMuted}
+                                            keyboardType="email-address"
+                                            autoCapitalize="none"
+                                            autoCorrect={false}
+                                            autoComplete="email"
+                                            textContentType="emailAddress"
+                                            returnKeyType="next"
+                                            value={email}
+                                            onChangeText={setEmail}
+                                        />
+                                    </View>
+                                </View>
 
-                        <View style={styles.inputContainer}>
-                            <View style={styles.passwordHeader}>
-                                <Text style={[styles.label, { color: colors.text }]}>Password</Text>
-                                <Pressable>
-                                    <Text style={[styles.forgotText, { color: colors.accent }]}>Forgot password?</Text>
+                                <View style={styles.inputContainer}>
+                                    <View style={styles.passwordHeader}>
+                                        <Text style={[styles.label, { color: colors.text }]}>Password</Text>
+                                        <Pressable>
+                                            <Text style={[styles.forgotText, { color: colors.accent }]}>Forgot password?</Text>
+                                        </Pressable>
+                                    </View>
+                                    <View style={[styles.inputWrapper, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+                                        <Lock size={20} color={colors.iconMuted} style={styles.inputIcon} />
+                                        <TextInput
+                                            style={[styles.input, { color: colors.text }]}
+                                            placeholder="Enter your password"
+                                            placeholderTextColor={colors.iconMuted}
+                                            secureTextEntry={!showPassword}
+                                            autoCapitalize="none"
+                                            autoCorrect={false}
+                                            autoComplete="password"
+                                            textContentType="password"
+                                            returnKeyType="done"
+                                            value={password}
+                                            onChangeText={setPassword}
+                                            onSubmitEditing={handleLogin}
+                                        />
+                                        <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                                            {showPassword ? (
+                                                <Eye size={20} color={colors.iconMuted} />
+                                            ) : (
+                                                <EyeOff size={20} color={colors.iconMuted} />
+                                            )}
+                                        </Pressable>
+                                    </View>
+                                </View>
+
+                                <Pressable
+                                    style={[styles.button, { backgroundColor: colors.accent }, loading && styles.buttonDisabled]}
+                                    onPress={handleLogin}
+                                    disabled={loading}
+                                >
+                                    <Text style={[styles.buttonText, { color: '#111111' }]}>{loading ? 'Signing in...' : 'Sign In'}</Text>
                                 </Pressable>
-                            </View>
-                            <View style={[styles.inputWrapper, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
-                                <Lock size={20} color={colors.iconMuted} style={styles.inputIcon} />
-                                <TextInput
-                                    style={[styles.input, { color: colors.text }]}
-                                    placeholder="Enter your password"
-                                    placeholderTextColor={colors.iconMuted}
-                                    secureTextEntry={!showPassword}
-                                    value={password}
-                                    onChangeText={setPassword}
-                                />
-                                <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                                    {showPassword ? (
-                                        <Eye size={20} color={colors.iconMuted} />
-                                    ) : (
-                                        <EyeOff size={20} color={colors.iconMuted} />
-                                    )}
-                                </Pressable>
-                            </View>
-                        </View>
 
-                        <Pressable
-                            style={[styles.button, { backgroundColor: colors.accent }, loading && styles.buttonDisabled]}
-                            onPress={handleLogin}
-                            disabled={loading}
-                        >
-                            <Text style={[styles.buttonText, { color: '#111111' }]}>{loading ? 'Signing in...' : 'Sign In'}</Text>
-                        </Pressable>
-
-                        <View style={styles.footer}>
-                            <Text style={[styles.footerText, { color: colors.subtext }]}>Dont have an account? </Text>
-                            <Pressable onPress={() => router.push('/(auth)/register')}>
-                                <Text style={[styles.footerLink, { color: colors.accent }]}>Sign up</Text>
-                            </Pressable>
-                        </View>
+                                <View style={styles.footer}>
+                                    <Text style={[styles.footerText, { color: colors.subtext }]}>Dont have an account? </Text>
+                                    <Pressable onPress={() => router.push('/(auth)/register')}>
+                                        <Text style={[styles.footerLink, { color: colors.accent }]}>Sign up</Text>
+                                    </Pressable>
+                                </View>
+                            </View>
+                        ) : (
+                            <View style={[styles.card, { padding: 24, backgroundColor: colors.card, borderColor: colors.border }]}>
+                                <View style={{ height: 20, backgroundColor: colors.border, borderRadius: 4, marginBottom: 20 }} />
+                                <View style={{ height: 20, backgroundColor: colors.border, borderRadius: 4, marginBottom: 20 }} />
+                                <View style={{ height: 50, backgroundColor: colors.border, borderRadius: 8 }} />
+                            </View>
+                        )}
                     </View>
-                ) : (
-                    <View style={[styles.card, { padding: 24, backgroundColor: colors.card, borderColor: colors.border }]}>
-                        <View style={{ height: 20, backgroundColor: colors.border, borderRadius: 4, marginBottom: 20 }} />
-                        <View style={{ height: 20, backgroundColor: colors.border, borderRadius: 4, marginBottom: 20 }} />
-                        <View style={{ height: 50, backgroundColor: colors.border, borderRadius: 8 }} />
-                    </View>
-                )}
-            </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
@@ -123,10 +145,13 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     content: {
-        flex: 1,
         paddingHorizontal: 24,
         justifyContent: 'center',
         paddingBottom: 40,
+        flexGrow: 1,
+    },
+    scrollContent: {
+        flexGrow: 1,
     },
     card: {
         borderRadius: 16,

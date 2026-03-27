@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, SafeAreaView, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { AuthService } from '../../services/auth.service';
@@ -50,10 +50,19 @@ export default function RegisterScreen() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <AppHeader />
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                <View style={styles.content}>
-                    {formReady ? (
-                        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <KeyboardAvoidingView
+                style={styles.container}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
+            >
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    <View style={styles.content}>
+                        {formReady ? (
+                            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
                             <View style={styles.inputContainer}>
                                 <Text style={[styles.label, { color: colors.text }]}>Username</Text>
                                 <View style={[styles.inputWrapper, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
@@ -63,6 +72,10 @@ export default function RegisterScreen() {
                                         placeholder="Choose a username"
                                         placeholderTextColor={colors.iconMuted}
                                         autoCapitalize="none"
+                                        autoCorrect={false}
+                                        autoComplete="username"
+                                        textContentType="username"
+                                        returnKeyType="next"
                                         value={username}
                                         onChangeText={setUsername}
                                     />
@@ -79,6 +92,10 @@ export default function RegisterScreen() {
                                         placeholderTextColor={colors.iconMuted}
                                         keyboardType="email-address"
                                         autoCapitalize="none"
+                                        autoCorrect={false}
+                                        autoComplete="email"
+                                        textContentType="emailAddress"
+                                        returnKeyType="next"
                                         value={email}
                                         onChangeText={setEmail}
                                     />
@@ -94,6 +111,11 @@ export default function RegisterScreen() {
                                         placeholder="Create a password"
                                         placeholderTextColor={colors.iconMuted}
                                         secureTextEntry={!showPassword}
+                                        autoCapitalize="none"
+                                        autoCorrect={false}
+                                        autoComplete="new-password"
+                                        textContentType="newPassword"
+                                        returnKeyType="next"
                                         value={password}
                                         onChangeText={setPassword}
                                     />
@@ -116,8 +138,14 @@ export default function RegisterScreen() {
                                         placeholder="Confirm your password"
                                         placeholderTextColor={colors.iconMuted}
                                         secureTextEntry={!showPassword}
+                                        autoCapitalize="none"
+                                        autoCorrect={false}
+                                        autoComplete="new-password"
+                                        textContentType="newPassword"
+                                        returnKeyType="done"
                                         value={confirmPassword}
                                         onChangeText={setConfirmPassword}
+                                        onSubmitEditing={handleRegister}
                                     />
                                 </View>
                             </View>
@@ -142,11 +170,12 @@ export default function RegisterScreen() {
                             <View style={{ height: 20, backgroundColor: colors.border, borderRadius: 4, marginBottom: 20 }} />
                             <View style={{ height: 20, backgroundColor: colors.border, borderRadius: 4, marginBottom: 20 }} />
                             <View style={{ height: 20, backgroundColor: colors.border, borderRadius: 4, marginBottom: 20 }} />
-                            <View style={{ height: 50, backgroundColor: colors.border, borderRadius: 8 }} />
-                        </View>
-                    )}
-                </View>
-            </ScrollView>
+                                <View style={{ height: 50, backgroundColor: colors.border, borderRadius: 8 }} />
+                            </View>
+                        )}
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }

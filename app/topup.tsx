@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView } from 'react-native';
 import AppHeader from '@/components/AppHeader';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
@@ -123,11 +123,20 @@ export default function TopUpScreen() {
     return (
         <View className="flex-1" style={{ backgroundColor: colors.background }}>
             <AppHeader />
-            <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
-                <View
-                    className="rounded-[28px] p-6 mb-5"
-                    style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}
+            <KeyboardAvoidingView
+                className="flex-1"
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
+            >
+                <ScrollView
+                    className="flex-1"
+                    contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+                    keyboardShouldPersistTaps="handled"
                 >
+                    <View
+                        className="rounded-[28px] p-6 mb-5"
+                        style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}
+                    >
                     <View className="flex-row items-center justify-between mb-6">
                         <View>
                             <Text className="text-sm font-inter mb-2" style={{ color: colors.subtext }}>
@@ -234,23 +243,26 @@ export default function TopUpScreen() {
                     )}
                 </View>
 
-                <View className="rounded-2xl p-5 mb-5" style={{ backgroundColor: colors.card }}>
-                    <Text className="text-lg font-inter font-bold mb-3" style={{ color: colors.text }}>
-                        {t("topup.orEnterAmount")}
-                    </Text>
-                    <TextInput
-                        keyboardType="numeric"
-                        value={customAmount}
-                        onChangeText={normalizeAmount}
-                        placeholder={t("topup.exampleAmount")}
-                        placeholderTextColor={colors.iconMuted}
-                        className="rounded-2xl px-4 py-4 text-base font-inter"
-                        style={{ backgroundColor: colors.background, color: colors.text }}
-                    />
-                    <Text className="text-sm font-inter mt-3" style={{ color: colors.subtext }}>
-                        {t("topup.amountRule")}
-                    </Text>
-                </View>
+                    <View className="rounded-2xl p-5 mb-5" style={{ backgroundColor: colors.card }}>
+                        <Text className="text-lg font-inter font-bold mb-3" style={{ color: colors.text }}>
+                            {t("topup.orEnterAmount")}
+                        </Text>
+                        <TextInput
+                            keyboardType="number-pad"
+                            inputMode="numeric"
+                            value={customAmount}
+                            onChangeText={normalizeAmount}
+                            placeholder={t("topup.exampleAmount")}
+                            placeholderTextColor={colors.iconMuted}
+                            autoCorrect={false}
+                            returnKeyType="done"
+                            className="rounded-2xl px-4 py-4 text-base font-inter"
+                            style={{ backgroundColor: colors.background, color: colors.text }}
+                        />
+                        <Text className="text-sm font-inter mt-3" style={{ color: colors.subtext }}>
+                            {t("topup.amountRule")}
+                        </Text>
+                    </View>
 
                 <View className="rounded-2xl p-5 mb-6" style={{ backgroundColor: colors.card }}>
                     <Text className="text-lg font-inter font-bold mb-3" style={{ color: colors.text }}>
@@ -273,12 +285,12 @@ export default function TopUpScreen() {
                     </View>
                 </View>
 
-                <TouchableOpacity
-                    className="rounded-2xl px-5 py-4 flex-row items-center justify-center"
-                    style={{ backgroundColor: colors.accent, opacity: paying ? 0.7 : 1 }}
-                    onPress={handlePayment}
-                    disabled={paying}
-                >
+                    <TouchableOpacity
+                        className="rounded-2xl px-5 py-4 flex-row items-center justify-center"
+                        style={{ backgroundColor: colors.accent, opacity: paying ? 0.7 : 1 }}
+                        onPress={handlePayment}
+                        disabled={paying}
+                    >
                     {paying ? (
                         <ActivityIndicator color="#111111" />
                     ) : (
@@ -289,21 +301,22 @@ export default function TopUpScreen() {
                             <ArrowRight color="#111111" size={18} />
                         </>
                     )}
-                </TouchableOpacity>
+                    </TouchableOpacity>
 
-                <TouchableOpacity
-                    className="flex-row items-center justify-center mt-4"
-                    onPress={() => {
-                        fetchBalance();
-                        loadPackages();
-                    }}
-                >
+                    <TouchableOpacity
+                        className="flex-row items-center justify-center mt-4"
+                        onPress={() => {
+                            fetchBalance();
+                            loadPackages();
+                        }}
+                    >
                     <RefreshCcw color={colors.iconMuted} size={16} />
                     <Text className="text-sm font-inter ml-2" style={{ color: colors.subtext }}>
                         {t("topup.refreshBalance")}
                     </Text>
-                </TouchableOpacity>
-            </ScrollView>
+                    </TouchableOpacity>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </View>
     );
 }

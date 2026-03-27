@@ -9,6 +9,9 @@ import {
     Animated,
     Modal,
     Platform,
+    FlatList,
+    Dimensions,
+    Keyboard,
 } from "react-native";
 import { useTheme } from "@/context/ThemeContext";
 import AppHeader from "@/components/AppHeader";
@@ -26,12 +29,17 @@ const SORT_OPTIONS = [
     { key: "rating", label: "Rating" },
 ];
 
+const { width } = Dimensions.get("window");
+const PAGE_SIZE = 20;
+const cardWidth = (width - 32 - 12) / 2;
+
 export default function SearchScreen() {
     const { colors } = useTheme();
     const router = useRouter();
 
     const [stories, setStories] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [initialLoading, setInitialLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const skeletonOpacity = useRef(new Animated.Value(1)).current;
     const [searchText, setSearchText] = useState("");
     const [sort, setSort] = useState("newest");
@@ -43,96 +51,87 @@ export default function SearchScreen() {
     const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
     const [selectedStatus, setSelectedStatus] = useState<string | undefined>(undefined);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const useNativeDriver = Platform.OS !== 'web';
+    const useNativeDriver = Platform.OS !== "web";
+    const isFetchingRef = useRef(false);
+    const hasMountedRef = useRef(false);
+    const searchInputRef = useRef<TextInput>(null);
 
-    const loadStories = async (reset: boolean = false) => {
-        setLoading(true);
+    const loadStories = async ({
+        reset = false,
+        nextPage = 1,
+    }: {
+        reset?: boolean;
+        nextPage?: number;
+    } = {}) => {
+        if (isFetchingRef.current) return;
+
+        isFetchingRef.current = true;
+
+        if (reset) {
+            setInitialLoading(true);
+            skeletonOpacity.setValue(1);
+        } else {
+            setLoadingMore(true);
+        }
+
         try {
-            const params: any = { q: searchText, sort, page, limit: 20 };
+            const params: any = { q: searchText, sort, page: nextPage, limit: PAGE_SIZE };
             if (selectedTypes.length) params.types = selectedTypes.join(",");
-            if (selectedStatus) params.status = selectedStatus;            const result = await AppService.searchStories(params);
-            if (reset) {
-                setStories(result.stories);
-            } else {
-                setStories(prev => [...prev, ...result.stories]);
-            }
+            if (selectedStatus) params.status = selectedStatus;            
+
+            const result = await AppService.searchStories(params);
+
+            setStories((prev) => (reset ? result.stories : [...prev, ...result.stories]));
             setTotal(result.total);
+            setPage(nextPage);
         } catch (e) {
             console.error(e);
         } finally {
-            setLoading(false);
-            Animated.timing(skeletonOpacity, { toValue: 0, duration: 300, useNativeDriver }).start();
+            if (reset) {
+                setInitialLoading(false);
+                Animated.timing(skeletonOpacity, { toValue: 0, duration: 300, useNativeDriver }).start();
+            } else {
+                setLoadingMore(false);
+            }
+            isFetchingRef.current = false;
         }
+    };
+
+    const resetAndLoadStories = () => {
+        loadStories({ reset: true, nextPage: 1 });
     };
 
     // debounced search
     const debouncedLoad = useMemo(
-        () => debounce(() => loadStories(true), 500),
+        () => debounce(() => resetAndLoadStories(), 500),
         [searchText, sort, selectedTypes, selectedStatus]
     );
 
     useEffect(() => {
-        setPage(1);
+        if (!hasMountedRef.current) {
+            hasMountedRef.current = true;
+            resetAndLoadStories();
+            return;
+        }
+
         debouncedLoad();
         return () => debouncedLoad.cancel();
     }, [searchText, sort]);
 
-    useEffect(() => {
-        // initial load
-        loadStories(true);
-    }, []);
+    const handleLoadMore = () => {
+        if (initialLoading || loadingMore || stories.length >= total) return;
+        loadStories({ nextPage: page + 1 });
+    };
 
-    const handleScroll = ({ nativeEvent }: any) => {
-        const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
-        if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 50 && !loading && stories.length < total) {
-            setPage(p => p + 1);
-            loadStories();
-        }
+    const openFilterModal = () => {
+        searchInputRef.current?.blur();
+        Keyboard.dismiss();
+        setShowFilter(true);
     };
 
     return (
         <View className="flex-1" style={{ backgroundColor: colors.background }}>
             <AppHeader onMenuPress={() => setIsMenuOpen(true)} />
-
-            <View className="px-4 pt-4">
-                <Text className="text-3xl font-bold" style={{ color: colors.text }}>Explore Stories</Text>
-                <Text className="text-sm mt-1" style={{ color: colors.subtext }}>Search stories, authors, or genres...</Text>
-            </View>
-
-            <View className="px-4 py-2 flex-row items-center">
-                <View className="flex-1">
-                    <View className="flex-row items-center rounded-xl px-4 py-2" style={{ backgroundColor: colors.inputBackground }}>
-                        <TextInput
-                            placeholder="Search stories, authors, genres..."
-                            placeholderTextColor={colors.iconMuted}
-                            className="flex-1 font-inter text-sm"
-                            style={{ color: colors.text }}
-                            value={searchText}
-                            onChangeText={setSearchText}
-                        />
-                    </View>
-                </View>
-                <TouchableOpacity className="ml-3" onPress={() => setShowFilter(true)}>
-                    <Filter color={colors.icon} size={24} />
-                </TouchableOpacity>
-            </View>
-
-            <View className="px-4 py-1 flex-row items-center justify-between">
-                <Text className="text-sm" style={{ color: colors.subtext }}>{total} stories</Text>
-                <TouchableOpacity
-                    className="flex-row items-center"
-                    onPress={() => {
-                        const currentIndex = SORT_OPTIONS.findIndex(o => o.key === sort);
-                        const next = SORT_OPTIONS[(currentIndex + 1) % SORT_OPTIONS.length];
-                        setSort(next.key);
-                    }}
-                >
-                    <Text className="text-sm" style={{ color: colors.text }}>
-                        {SORT_OPTIONS.find(o => o.key === sort)?.label}
-                    </Text>
-                    <ChevronDown color={colors.icon} size={16} />
-                </TouchableOpacity>
-            </View>
             <Modal visible={showFilter} transparent animationType="slide">
                 <View className="flex-1 justify-end bg-black bg-opacity-50">
                     <View className="bg-white p-4 rounded-t-xl" style={{ backgroundColor: colors.card }}>
@@ -178,8 +177,7 @@ export default function SearchScreen() {
                                 onPress={() => {
                                     setShowFilter(false);
                                     // re-run search with filters
-                                    setPage(1);
-                                    loadStories(true);
+                                    resetAndLoadStories();
                                 }}
                             >
                                 <Text style={{ color: colors.accent }} className="font-inter font-bold">Apply</Text>
@@ -189,7 +187,7 @@ export default function SearchScreen() {
                 </View>
             </Modal>
 
-            {loading && stories.length === 0 ? (
+            {initialLoading && stories.length === 0 ? (
                 <Animated.View style={{ opacity: skeletonOpacity }}>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-4">
                         {[...Array(6)].map((_, i) => (
@@ -198,28 +196,91 @@ export default function SearchScreen() {
                     </ScrollView>
                 </Animated.View>
             ) : (
-                <ScrollView
-                    className="px-4"
-                    onScroll={handleScroll}
-                    scrollEventThrottle={16}
-                >
-                    <View className="flex-row flex-wrap -mx-2">
-                        {stories.map(item => (
-                            <View key={item._id} className="w-1/2 px-2">
-                                <StoryCard
-                                    story={item}
-                                    onPress={() => router.push({
-                                        pathname: `/story/${item._id}` as any,
-                                        params: { storyData: JSON.stringify(item) }
-                                    })}
-                                />
+                <FlatList
+                    data={stories}
+                    keyExtractor={(item, index) => item._id || index.toString()}
+                    numColumns={2}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
+                    contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24 }}
+                    columnWrapperStyle={{ justifyContent: "space-between" }}
+                    ListHeaderComponent={
+                        <View>
+                            <View className="pt-4">
+                                <Text className="text-3xl font-bold" style={{ color: colors.text }}>Explore Stories</Text>
+                                <Text className="text-sm mt-1" style={{ color: colors.subtext }}>Search stories, authors, or genres...</Text>
                             </View>
-                        ))}
-                    </View>
-                    {loading && stories.length > 0 && (
-                        <ActivityIndicator size="large" color={colors.accent} className="my-4" />
+
+                            <View className="py-2 flex-row items-center">
+                                <View className="flex-1">
+                                    <View className="flex-row items-center rounded-xl px-4 py-2" style={{ backgroundColor: colors.inputBackground }}>
+                                        <TextInput
+                                            ref={searchInputRef}
+                                            placeholder="Search stories, authors, genres..."
+                                            placeholderTextColor={colors.iconMuted}
+                                            className="flex-1 font-inter text-sm"
+                                            style={{ color: colors.text }}
+                                            autoCorrect={false}
+                                            autoCapitalize="none"
+                                            returnKeyType="search"
+                                            clearButtonMode="while-editing"
+                                            value={searchText}
+                                            onChangeText={setSearchText}
+                                        />
+                                    </View>
+                                </View>
+                                <TouchableOpacity className="ml-3" onPress={openFilterModal}>
+                                    <Filter color={colors.icon} size={24} />
+                                </TouchableOpacity>
+                            </View>
+
+                            <View className="py-1 flex-row items-center justify-between">
+                                <Text className="text-sm" style={{ color: colors.subtext }}>{total} stories</Text>
+                                <TouchableOpacity
+                                    className="flex-row items-center"
+                                    onPress={() => {
+                                        const currentIndex = SORT_OPTIONS.findIndex(o => o.key === sort);
+                                        const next = SORT_OPTIONS[(currentIndex + 1) % SORT_OPTIONS.length];
+                                        setSort(next.key);
+                                    }}
+                                >
+                                    <Text className="text-sm" style={{ color: colors.text }}>
+                                        {SORT_OPTIONS.find(o => o.key === sort)?.label}
+                                    </Text>
+                                    <ChevronDown color={colors.icon} size={16} />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    }
+                    ListEmptyComponent={
+                        <View className="py-16 items-center">
+                            <Text className="font-inter text-center" style={{ color: colors.subtext }}>
+                                No stories found.
+                            </Text>
+                        </View>
+                    }
+                    ListFooterComponent={
+                        loadingMore ? (
+                            <ActivityIndicator size="large" color={colors.accent} className="my-4" />
+                        ) : (
+                            <View className="h-4" />
+                        )
+                    }
+                    onEndReached={handleLoadMore}
+                    onEndReachedThreshold={0.4}
+                    renderItem={({ item }) => (
+                        <View style={{ width: cardWidth, marginBottom: 16 }}>
+                            <StoryCard
+                                story={item}
+                                onPress={() => router.push({
+                                    pathname: `/story/${item._id}` as any,
+                                    params: { storyData: JSON.stringify(item) }
+                                })}
+                            />
+                        </View>
                     )}
-                </ScrollView>
+                />
             )}
             <SideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
         </View>

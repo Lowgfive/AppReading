@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { View, Text, TouchableOpacity, Modal, TextInput, ActivityIndicator, Platform } from "react-native";
+import { View, Text, TouchableOpacity, Modal, TextInput, ActivityIndicator, Platform, KeyboardAvoidingView } from "react-native";
 import { LogOut, Camera, Edit3 } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Language, useLanguage } from "@/context/LanguageContext";
@@ -265,8 +265,13 @@ export default function Settings({ profileData, setProfileData, handleSignOut, o
             </TouchableOpacity>
 
             <Modal visible={editModalVisible} transparent animationType="fade">
-                <View className="flex-1 justify-center items-center" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
-                    <View className="w-11/12 p-6 rounded-2xl" style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
+                <KeyboardAvoidingView
+                    className="flex-1"
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}
+                >
+                    <View className="flex-1 justify-center items-center" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
+                        <View className="w-11/12 p-6 rounded-2xl" style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
                         <Text className="text-xl font-bold font-inter mb-4" style={{ color: colors.text }}>
                             {editField === "password"
                                 ? t("settings.editTitlePassword")
@@ -284,6 +289,11 @@ export default function Settings({ profileData, setProfileData, handleSignOut, o
                                 placeholder={t("settings.oldPassword")}
                                 placeholderTextColor={colors.iconMuted}
                                 secureTextEntry
+                                autoCapitalize="none"
+                                autoCorrect={false}
+                                autoComplete="password"
+                                textContentType="password"
+                                returnKeyType="next"
                                 value={oldPassword}
                                 onChangeText={setOldPassword}
                             />
@@ -309,8 +319,14 @@ export default function Settings({ profileData, setProfileData, handleSignOut, o
                             placeholderTextColor={colors.iconMuted}
                             secureTextEntry={editField === 'password'}
                             multiline={editField === 'description'}
+                            autoCapitalize={editField === 'email' || editField === 'password' ? 'none' : 'sentences'}
+                            autoCorrect={editField !== 'email' && editField !== 'password'}
+                            autoComplete={editField === 'email' ? 'email' : editField === 'password' ? 'password' : 'off'}
+                            textContentType={editField === 'email' ? 'emailAddress' : editField === 'password' ? 'newPassword' : 'none'}
+                            returnKeyType={editField === 'description' ? 'default' : 'done'}
                             value={editValue}
                             onChangeText={setEditValue}
+                            onSubmitEditing={editField === 'description' ? undefined : handleSaveProfileOptions}
                         />
 
                         <View className="flex-row justify-end gap-x-3">
@@ -322,7 +338,8 @@ export default function Settings({ profileData, setProfileData, handleSignOut, o
                             </TouchableOpacity>
                         </View>
                     </View>
-                </View>
+                    </View>
+                </KeyboardAvoidingView>
             </Modal>
         </View>
     );

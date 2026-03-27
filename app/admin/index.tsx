@@ -3,10 +3,9 @@ import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useToast } from '@/context/ToastContext';
 import { AppService } from '@/services/app.service';
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { BarChart3, BookOpen, FileText, MessageSquare, Plus, Users } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 type DashboardResponse = {
@@ -70,6 +69,11 @@ export default function AdminDashboardScreen() {
             active = false;
         };
     }, [isLoading, showToast, user?.role]);
+
+    const totalRevenue = useMemo(
+        () => (dashboard?.revenue || []).reduce((sum, item) => sum + item.totalUnlocked * 50, 0),
+        [dashboard?.revenue]
+    );
 
     if (loading || isLoading) {
         return (
@@ -159,6 +163,24 @@ export default function AdminDashboardScreen() {
                             </TouchableOpacity>
                         );
                     })}
+
+                    <TouchableOpacity
+                        onPress={() => router.push('/admin/revenue' as any)}
+                        activeOpacity={0.8}
+                        className="w-[48%] rounded-3xl border p-5 mb-4"
+                        style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                    >
+                        <View className="flex-row items-center justify-between mb-8">
+                            <Text className="text-base font-medium" style={{ color: colors.subtext }}>
+                                Doanh thu
+                            </Text>
+                            <BarChart3 color="#FB7185" size={20} />
+                        </View>
+
+                        <Text className="text-4xl font-bold" style={{ color: colors.text }}>
+                            {totalRevenue}
+                        </Text>
+                    </TouchableOpacity>
                 </View>
 
                 <TouchableOpacity
@@ -176,54 +198,6 @@ export default function AdminDashboardScreen() {
                         Xem, thêm, sửa, xóa truyện và quản lý các chương.
                     </Text>
                 </TouchableOpacity>
-
-                <View
-                    className="rounded-3xl border p-5 mt-4"
-                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
-                >
-                    <View className="flex-row items-center mb-3">
-                        <BarChart3 color={colors.accent} size={22} />
-                        <Text className="text-2xl font-bold ml-3" style={{ color: colors.text }}>
-                            Doanh thu truyện
-                        </Text>
-                    </View>
-                    <Text className="text-sm leading-6 mb-5" style={{ color: colors.subtext }}>
-                        Doanh thu được tính dựa trên số lượt mở khóa chương theo từng truyện.
-                    </Text>
-
-                    {dashboard?.revenue?.length ? (
-                        <View className="gap-3">
-                            {dashboard.revenue.map((item) => (
-                                <View
-                                    key={item.storyId}
-                                    className="rounded-2xl border px-4 py-4 flex-row items-center justify-between"
-                                    style={{ backgroundColor: colors.background, borderColor: colors.border }}
-                                >
-                                    <View className="flex-1 pr-4">
-                                        <Text className="text-base font-semibold" style={{ color: colors.text }}>
-                                            {item.title || 'Truyện không xác định'}
-                                        </Text>
-                                    </View>
-                                    <View className="flex-row items-center">
-                                        <Text className="text-2xl font-bold mr-2" style={{ color: colors.accent }}>
-                                            {item.totalUnlocked * 50}
-                                        </Text>
-                                        <Ionicons name="diamond" size={16} color={colors.accent} />
-                                    </View>
-                                </View>
-                            ))}
-                        </View>
-                    ) : (
-                        <View
-                            className="rounded-2xl border px-4 py-5"
-                            style={{ backgroundColor: colors.background, borderColor: colors.border }}
-                        >
-                            <Text className="text-sm" style={{ color: colors.subtext }}>
-                                Chưa có dữ liệu doanh thu.
-                            </Text>
-                        </View>
-                    )}
-                </View>
             </ScrollView>
         </View>
     );
