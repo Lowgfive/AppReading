@@ -29,7 +29,9 @@ export default function ReaderScreen() {
     const [chapter, setChapter] = useState<any>(null);
     const [chapters, setChapters] = useState<any[]>([]);
     const [totalChapters, setTotalChapters] = useState<number>(0);
-    const [loading, setLoading] = useState(true);
+    const [initialLoading, setInitialLoading] = useState(true);
+    const [isChapterSwitching, setIsChapterSwitching] = useState(false);
+    const [showChapterSwitchingIndicator, setShowChapterSwitchingIndicator] = useState(false);
     const [locked, setLocked] = useState(false);
     const [comments, setComments] = useState<ChapterComment[]>([]);
     const [commentsLoading, setCommentsLoading] = useState(true);
@@ -42,6 +44,19 @@ export default function ReaderScreen() {
     const scrollViewRef = useRef<ScrollView>(null);
 
     const currentChapterNum = Number(chapterNumber) || 1;
+
+    useEffect(() => {
+        if (!isChapterSwitching) {
+            setShowChapterSwitchingIndicator(false);
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            setShowChapterSwitchingIndicator(true);
+        }, 180);
+
+        return () => clearTimeout(timer);
+    }, [isChapterSwitching]);
 
     useEffect(() => {
         const fetchStoryData = async () => {
@@ -80,7 +95,8 @@ export default function ReaderScreen() {
         if (meta && meta.isPay === false) {
             setLocked(true);
             setChapter(null);
-            setLoading(false);
+            setInitialLoading(false);
+            setIsChapterSwitching(false);
             showToast("This chapter is locked. Please purchase it first.", "error");
             return;
         }
@@ -182,9 +198,13 @@ export default function ReaderScreen() {
 
     const fetchChapterContent = async () => {
         try {
-            setLoading(true);
+            if (!chapter) {
+                setInitialLoading(true);
+            } else {
+                setIsChapterSwitching(true);
+            }
+
             setLocked(false);
-            setComments([]);
             setCommentsLoading(true);
             const data = await AppService.getChapterContent(storyId as string, currentChapterNum);
             setChapter(data.chapter || data);
@@ -193,10 +213,12 @@ export default function ReaderScreen() {
             if (error.response?.status === 403 || error.response?.data?.message?.includes('locked')) {
                 setLocked(true);
                 setChapter(null);
+                setComments([]);
                 showToast("This chapter is locked. Please purchase it first.", "error");
             }
         } finally {
-            setLoading(false);
+            setInitialLoading(false);
+            setIsChapterSwitching(false);
         }
     };
 
@@ -245,7 +267,7 @@ export default function ReaderScreen() {
         });
     };
 
-    if (loading) {
+    if (initialLoading && !chapter) {
         return (
             <SafeAreaView className="flex-1 justify-center items-center" style={{ backgroundColor: colors.background }}>
                 <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={colors.background} />
@@ -395,6 +417,9 @@ export default function ReaderScreen() {
                     </View>
                 </View>
                 <View className="flex-row items-center">
+                    {showChapterSwitchingIndicator ? (
+                        <ActivityIndicator color={colors.accent} size="small" />
+                    ) : null}
                     <TouchableOpacity onPress={() => router.push('/(tabs)/home')} className="p-2">
                         <Home color={colors.icon} size={22} />
                     </TouchableOpacity>
@@ -415,6 +440,12 @@ export default function ReaderScreen() {
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 >
                     <View className="px-5 pt-6">
+                        {showChapterSwitchingIndicator ? (
+                            <Text className="text-xs font-semibold mb-3 tracking-[1px]" style={{ color: colors.accent }}>
+                                LOADING NEXT CHAPTER
+                            </Text>
+                        ) : null}
+
                         <Text className="font-inter text-2xl font-bold mb-2" style={{ color: colors.text }}>
                             Chapter {currentChapterNum}: {chapter.title || 'Untitled'}
                         </Text>
@@ -494,8 +525,8 @@ export default function ReaderScreen() {
             >
                 <TouchableOpacity
                     onPress={handlePrevChapter}
-                    disabled={currentChapterNum <= 1 || !prevChapterUnlocked}
-                    className={`nav-button p-2 ${(currentChapterNum <= 1 || !prevChapterUnlocked) ? 'opacity-30' : 'opacity-100'}`}
+                    disabled={currentChapterNum <= 1 || !prevChapterUnlocked || isChapterSwitching}
+                    className={`nav-button p-2 ${(currentChapterNum <= 1 || !prevChapterUnlocked || isChapterSwitching) ? 'opacity-30' : 'opacity-100'}`}
                 >
                     <ChevronLeft color={colors.icon} size={24} />
                 </TouchableOpacity>
@@ -506,8 +537,8 @@ export default function ReaderScreen() {
 
                 <TouchableOpacity
                     onPress={handleNextChapter}
-                    disabled={atEnd || !nextChapterUnlocked}
-                    className={`nav-button p-2 ${(atEnd || !nextChapterUnlocked) ? 'opacity-30' : 'opacity-100'}`}
+                    disabled={atEnd || !nextChapterUnlocked || isChapterSwitching}
+                    className={`nav-button p-2 ${(atEnd || !nextChapterUnlocked || isChapterSwitching) ? 'opacity-30' : 'opacity-100'}`}
                 >
                     {nextChapterUnlocked ? (
                         <ChevronRight color={colors.icon} size={24} />

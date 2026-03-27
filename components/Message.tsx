@@ -89,7 +89,7 @@ export default function Message({ roomId }: Props) {
   }, [roomId, token]);
 
   useEffect(() => {
-    const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_URL || API_URL.replace("/api", "");
+    const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_URL || API_URL?.replace("/api", "");
 
     const socket = io(SOCKET_URL, {
       transports: ["websocket"],

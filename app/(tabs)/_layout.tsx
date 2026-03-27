@@ -1,10 +1,12 @@
 import { Tabs } from "expo-router";
 import { Home, Search, BookOpen, User } from "lucide-react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
 
 export default function TabsLayout() {
     const { colors } = useTheme();
+    const { t } = useLanguage();
 
     return (
         <Tabs
@@ -29,7 +31,7 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="home"
                 options={{
-                    title: "Home",
+                    title: t("tabs.home"),
                     tabBarIcon: ({ color, size }) => (
                         <Home color={color} size={24} />
                     )
@@ -38,7 +40,7 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="search"
                 options={{
-                    title: "Search",
+                    title: t("tabs.search"),
                     tabBarIcon: ({ color, size }) => (
                         <Search color={color} size={24} />
                     )
@@ -47,7 +49,7 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="library"
                 options={{
-                    title: "Library",
+                    title: t("tabs.library"),
                     tabBarIcon: ({ color, size }) => (
                         <BookOpen color={color} size={24} />
                     )
@@ -56,7 +58,7 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="message"
                 options={{
-                    title: "Chat",
+                    title: t("tabs.chat"),
                     tabBarIcon: ({ color }) => (
                         <Ionicons name="chatbubble-outline" color={color} size={24} />
                     )
@@ -65,13 +67,12 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="profile"
                 options={{
-                    title: "Profile",
+                    title: t("tabs.profile"),
                     tabBarIcon: ({ color, size }) => (
                         <User color={color} size={24} />
                     )
                 }}
             />
-            
         </Tabs>
     )
 }

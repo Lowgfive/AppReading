@@ -58,7 +58,7 @@ export default function HomeScreen() {
                             {title}
                         </Text>
                     </View>
-                    <TouchableOpacity onPress={() => router.push("/(tabs)/search") }>
+                    <TouchableOpacity onPress={() => router.push("/(tabs)/search")}>
                         <Text className="text-sm font-inter" style={{ color: colors.iconMuted }}>Xem Tất Cả &gt;</Text>
                     </TouchableOpacity>
                 </View>
@@ -94,17 +94,19 @@ export default function HomeScreen() {
                     </Text>
                 </View>
 
-                <View className="px-6 mb-12">
-                    <View className="flex-row items-center rounded-xl px-4 py-3 border border-transparent" style={{ backgroundColor: colors.inputBackground }}>
-                        <Search color={colors.iconMuted} size={20} className="mr-3" />
-                        <TextInput
-                            placeholder="Tìm kiếm truyện, tác giả, hoặc thể loại..."
-                            placeholderTextColor={colors.iconMuted}
-                            className="flex-1 font-inter text-sm"
-                            style={{ color: colors.text }}
-                        />
+                <TouchableOpacity onPress = {() => {router.push("/(tabs)/search")}}>
+                    <View className="px-6 mb-12">
+                        <View className="flex-row items-center rounded-xl px-4 py-3 border border-transparent" style={{ backgroundColor: colors.inputBackground }}>
+                            <Search color={colors.iconMuted} size={20} className="mr-3" />
+                            <TextInput
+                                placeholder="Tìm kiếm truyện, tác giả, hoặc thể loại..."
+                                placeholderTextColor={colors.iconMuted}
+                                className="flex-1 font-inter text-sm"
+                                style={{ color: colors.text }}
+                            />
+                        </View>
                     </View>
-                </View>
+                </TouchableOpacity>
 
                 {loading ? (
                     <Animated.View style={{ opacity: skeletonOpacity }}>

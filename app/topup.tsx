@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import AppHeader from '@/components/AppHeader';
+import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { AppService } from '@/services/app.service';
 import { AppContext } from '@/context/AppContext';
@@ -16,6 +17,7 @@ type TopupPackage = {
 
 export default function TopUpScreen() {
     const { colors } = useTheme();
+    const { t } = useLanguage();
     const params = useLocalSearchParams<{
         status?: string;
         message?: string;
@@ -54,14 +56,14 @@ export default function TopUpScreen() {
 
         if (paymentStatus === "success") {
             fetchBalance();
-            showToast(paymentMessage || "Top up successful", "success");
+            showToast(paymentMessage || t("topup.toastSuccess"), "success");
             return;
         }
 
         if (paymentStatus === "failed") {
-            showToast(paymentMessage || "Payment failed", "error");
+            showToast(paymentMessage || t("topup.toastFailed"), "error");
         }
-    }, [paymentStatus, paymentMessage, paymentRef, lastHandledRef, fetchBalance, showToast]);
+    }, [paymentStatus, paymentMessage, paymentRef, lastHandledRef, fetchBalance, showToast, t]);
 
     const loadPackages = async () => {
         try {
@@ -70,7 +72,7 @@ export default function TopUpScreen() {
             setPackages(res.packages || []);
         } catch (error) {
             console.error("Failed to load topup packages", error);
-            showToast("Cannot load top-up packages", "error");
+            showToast(t("topup.toastLoadPackagesFailed"), "error");
         } finally {
             setLoading(false);
         }
@@ -95,7 +97,7 @@ export default function TopUpScreen() {
 
     const handlePayment = async () => {
         if (!selectedAmount || selectedAmount < 1000 || selectedAmount % 1000 !== 0) {
-            showToast("Amount must be at least 1,000 VND and divisible by 1,000", "error");
+            showToast(t("topup.toastAmountInvalid"), "error");
             return;
         }
 
@@ -111,7 +113,7 @@ export default function TopUpScreen() {
             await WebBrowser.openAuthSessionAsync(res.paymentUrl, "appreading://topup");
             await fetchBalance();
         } catch (error: any) {
-            const message = error?.response?.data?.message || "Cannot initialize VNPay payment";
+            const message = error?.response?.data?.message || t("topup.toastInitPaymentFailed");
             showToast(message, "error");
         } finally {
             setPaying(false);
@@ -129,10 +131,10 @@ export default function TopUpScreen() {
                     <View className="flex-row items-center justify-between mb-6">
                         <View>
                             <Text className="text-sm font-inter mb-2" style={{ color: colors.subtext }}>
-                                VNPay Sandbox
+                                {t("topup.sandbox")}
                             </Text>
                             <Text className="text-[28px] font-inter font-bold" style={{ color: colors.text }}>
-                                Nap Stone
+                                {t("topup.title")}
                             </Text>
                         </View>
                         <View
@@ -145,7 +147,7 @@ export default function TopUpScreen() {
 
                     <View className="rounded-2xl px-4 py-4 mb-4" style={{ backgroundColor: colors.background }}>
                         <Text className="text-sm font-inter mb-2" style={{ color: colors.subtext }}>
-                            So du hien tai
+                            {t("topup.currentBalance")}
                         </Text>
                         <View className="flex-row items-center">
                             <Gem color={colors.accent} size={18} />
@@ -153,13 +155,13 @@ export default function TopUpScreen() {
                                 {balance}
                             </Text>
                             <Text className="text-sm font-inter ml-2" style={{ color: colors.subtext }}>
-                                Stones
+                                {t("topup.stones")}
                             </Text>
                         </View>
                     </View>
 
                     <Text className="text-sm font-inter" style={{ color: colors.subtext }}>
-                        Ty le quy doi: 1,000 VND = 10 Stone
+                        {t("topup.exchangeRate")}
                     </Text>
                 </View>
 
@@ -173,14 +175,14 @@ export default function TopUpScreen() {
                         }}
                     >
                         <Text className="text-base font-inter font-bold mb-1" style={{ color: colors.text }}>
-                            {paymentStatus === "success" ? "Thanh toan thanh cong" : "Thanh toan chua thanh cong"}
+                            {paymentStatus === "success" ? t("topup.paymentSuccess") : t("topup.paymentPending")}
                         </Text>
                         <Text className="text-sm font-inter mb-2" style={{ color: colors.subtext }}>
                             {paymentMessage}
                         </Text>
                         {!!paymentStones && (
                             <Text className="text-sm font-inter" style={{ color: colors.text }}>
-                                Da nhan {paymentStones} Stones tu giao dich {paymentAmount} VND.
+                                {t("topup.receivedFromTransaction", { stones: paymentStones, amount: paymentAmount || 0 })}
                             </Text>
                         )}
                     </View>
@@ -188,7 +190,7 @@ export default function TopUpScreen() {
 
                 <View className="mb-5">
                     <Text className="text-lg font-inter font-bold mb-3" style={{ color: colors.text }}>
-                        Chon goi nap
+                        {t("topup.choosePackage")}
                     </Text>
 
                     {loading ? (
@@ -215,7 +217,7 @@ export default function TopUpScreen() {
                                                     {item.label}
                                                 </Text>
                                                 <Text className="text-sm font-inter" style={{ color: colors.subtext }}>
-                                                    Nhan {item.stones} Stones
+                                                    {t("topup.receive", { stones: item.stones })}
                                                 </Text>
                                             </View>
                                             <View className="flex-row items-center">
@@ -234,34 +236,34 @@ export default function TopUpScreen() {
 
                 <View className="rounded-2xl p-5 mb-5" style={{ backgroundColor: colors.card }}>
                     <Text className="text-lg font-inter font-bold mb-3" style={{ color: colors.text }}>
-                        Hoac nhap so tien
+                        {t("topup.orEnterAmount")}
                     </Text>
                     <TextInput
                         keyboardType="numeric"
                         value={customAmount}
                         onChangeText={normalizeAmount}
-                        placeholder="Vi du: 150000"
+                        placeholder={t("topup.exampleAmount")}
                         placeholderTextColor={colors.iconMuted}
                         className="rounded-2xl px-4 py-4 text-base font-inter"
                         style={{ backgroundColor: colors.background, color: colors.text }}
                     />
                     <Text className="text-sm font-inter mt-3" style={{ color: colors.subtext }}>
-                        So tien phai chia het cho 1,000 VND.
+                        {t("topup.amountRule")}
                     </Text>
                 </View>
 
                 <View className="rounded-2xl p-5 mb-6" style={{ backgroundColor: colors.card }}>
                     <Text className="text-lg font-inter font-bold mb-3" style={{ color: colors.text }}>
-                        Tom tat giao dich
+                        {t("topup.summary")}
                     </Text>
                     <View className="flex-row items-center justify-between mb-2">
-                        <Text className="text-sm font-inter" style={{ color: colors.subtext }}>So tien nap</Text>
+                        <Text className="text-sm font-inter" style={{ color: colors.subtext }}>{t("topup.amount")}</Text>
                         <Text className="text-sm font-inter font-bold" style={{ color: colors.text }}>
                             {selectedAmount.toLocaleString("vi-VN")} VND
                         </Text>
                     </View>
                     <View className="flex-row items-center justify-between">
-                        <Text className="text-sm font-inter" style={{ color: colors.subtext }}>Stone nhan duoc</Text>
+                        <Text className="text-sm font-inter" style={{ color: colors.subtext }}>{t("topup.stonesReceived")}</Text>
                         <View className="flex-row items-center">
                             <Gem color={colors.accent} size={16} />
                             <Text className="text-sm font-inter font-bold ml-2" style={{ color: colors.text }}>
@@ -282,7 +284,7 @@ export default function TopUpScreen() {
                     ) : (
                         <>
                             <Text className="text-black font-inter font-bold text-base mr-2">
-                                Thanh toan qua VNPay Sandbox
+                                {t("topup.payWithVnpay")}
                             </Text>
                             <ArrowRight color="#111111" size={18} />
                         </>
@@ -298,7 +300,7 @@ export default function TopUpScreen() {
                 >
                     <RefreshCcw color={colors.iconMuted} size={16} />
                     <Text className="text-sm font-inter ml-2" style={{ color: colors.subtext }}>
-                        Lam moi so du
+                        {t("topup.refreshBalance")}
                     </Text>
                 </TouchableOpacity>
             </ScrollView>

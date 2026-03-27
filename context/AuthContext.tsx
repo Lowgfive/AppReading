@@ -8,6 +8,7 @@ type AuthContextType = {
     isLoading: boolean;
     signIn: (token: string) => Promise<void>;
     signOut: () => Promise<void>;
+    updateUser: (nextUser: any) => void;
 };
 
 export const AuthContext = createContext<AuthContextType>({
@@ -16,6 +17,7 @@ export const AuthContext = createContext<AuthContextType>({
     isLoading: true,
     signIn: async () => {},
     signOut: async () => {},
+    updateUser: () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -35,7 +37,6 @@ export default function AuthProvider({ children }: PropsWithChildren) {
             if (storedToken) {
                 setToken(storedToken);
 
-                // Fetch profile once to populate `user` data
                 const profileRes = await AuthService.getProfile();
                 if (profileRes?.user) {
                     setUser(profileRes.user);
@@ -66,8 +67,12 @@ export default function AuthProvider({ children }: PropsWithChildren) {
         router.replace("/(tabs)/home");
     };
 
+    const updateUser = (nextUser: any) => {
+        setUser(nextUser);
+    };
+
     return (
-        <AuthContext.Provider value={{ user, token, isLoading, signIn, signOut }}>
+        <AuthContext.Provider value={{ user, token, isLoading, signIn, signOut, updateUser }}>
             {children}
         </AuthContext.Provider>
     );

@@ -4,10 +4,11 @@ import { BookOpen, Sun, Moon, X, Home, Search as SearchIcon, Library, User } fro
 import { useRouter } from 'expo-router';
 import { AuthService } from '@/services/auth.service';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 
 const { height } = Dimensions.get('window');
-const MENU_HEIGHT = height * 0.5; // Chiếm 50% chiều dài màn hình
+const MENU_HEIGHT = height * 0.5;
 
 interface SideMenuProps {
     isOpen: boolean;
@@ -18,6 +19,7 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
     const slideAnim = useRef(new Animated.Value(-MENU_HEIGHT)).current;
     const router = useRouter();
     const { signOut } = useAuth();
+    const { t } = useLanguage();
     const { colors, toggleTheme, isDarkMode } = useTheme();
     const [token, setToken] = useState<string | null>(null);
     const [isVisible, setIsVisible] = useState(isOpen);
@@ -46,7 +48,7 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
                 setIsVisible(false);
             });
         }
-    }, [isOpen]);
+    }, [isOpen, slideAnim, useNativeDriver]);
 
     const handleAuthAction = async () => {
         if (token) {
@@ -74,22 +76,19 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
 
     return (
         <Modal transparent visible={isVisible} animationType="none" onRequestClose={onClose}>
-            {/* Backdrop overlay */}
             <Animated.View style={[{ opacity: fadeAnim }, styles.overlay]}>
                 <TouchableWithoutFeedback onPress={onClose}>
                     <View style={styles.overlayClickArea} />
                 </TouchableWithoutFeedback>
             </Animated.View>
 
-            {/* Slide-out panel */}
             <Animated.View
                 style={[{ transform: [{ translateY: slideAnim }], width: '100%' }, styles.panel, { backgroundColor: colors.card }]}
             >
-                {/* Header Section */}
                 <View className="flex-row justify-between items-center mb-8">
                     <View className="flex-row items-center gap-2">
                         <BookOpen color={colors.accent} size={24} />
-                        <Text className="font-serifClassic text-lg font-bold pt-1" style={{ color: colors.text }}>Storytime</Text>
+                        <Text className="font-serifClassic text-lg font-bold pt-1" style={{ color: colors.text }}>{t("header.appName")}</Text>
                     </View>
                     <View className="flex-row items-center gap-3">
                         <TouchableOpacity onPress={toggleTheme}>
@@ -105,35 +104,34 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
                     </View>
                 </View>
 
-                {/* Menu Items */}
                 <View className="gap-2 mb-8">
                     <TouchableOpacity onPress={() => handleNavigation('/(tabs)/home')} className="flex-row items-center gap-4 p-3 rounded-xl" style={{ backgroundColor: colors.card }}>
                         <Home color={colors.icon} size={20} />
-                        <Text className="text-base font-serifClassic font-medium pt-1" style={{ color: colors.text }}>Home</Text>
+                        <Text className="text-base font-serifClassic font-medium pt-1" style={{ color: colors.text }}>{t("menu.home")}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => handleNavigation('/(tabs)/search')} className="flex-row items-center gap-4 p-3 rounded-xl" style={{ backgroundColor: colors.card }}>
                         <SearchIcon color={colors.iconMuted} size={20} />
-                        <Text className="text-base font-serifClassic font-medium pt-1" style={{ color: colors.text }}>Search</Text>
+                        <Text className="text-base font-serifClassic font-medium pt-1" style={{ color: colors.text }}>{t("menu.search")}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => handleNavigation('/(tabs)/library')} className="flex-row items-center gap-4 p-3 rounded-xl" style={{ backgroundColor: colors.card }}>
                         <Library color={colors.iconMuted} size={20} />
-                        <Text className="text-base font-serifClassic font-medium pt-1" style={{ color: colors.text }}>Library</Text>
+                        <Text className="text-base font-serifClassic font-medium pt-1" style={{ color: colors.text }}>{t("menu.library")}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => handleNavigation('/(tabs)/profile')} className="flex-row items-center gap-4 p-3 rounded-xl" style={{ backgroundColor: colors.card }}>
                         <User color={colors.iconMuted} size={20} />
-                        <Text className="text-base font-serifClassic font-medium pt-1" style={{ color: colors.text }}>Profile</Text>
+                        <Text className="text-base font-serifClassic font-medium pt-1" style={{ color: colors.text }}>{t("menu.profile")}</Text>
                     </TouchableOpacity>
                 </View>
 
-                {/* Sign In / Sign Out Button */}
                 <TouchableOpacity
                     onPress={handleAuthAction}
                     className="py-3.5 rounded-xl items-center shadow-md"
                     style={{ backgroundColor: colors.accent }}
                 >
-                    <Text className="font-bold font-serifClassic text-base" style={{ color: colors.background }}>{token ? 'Sign Out' : 'Sign In'}</Text>
+                    <Text className="font-bold font-serifClassic text-base" style={{ color: colors.background }}>
+                        {token ? t("menu.signOut") : t("menu.signIn")}
+                    </Text>
                 </TouchableOpacity>
-
             </Animated.View>
         </Modal>
     );
@@ -155,7 +153,7 @@ const styles = StyleSheet.create({
         right: 0,
         borderBottomLeftRadius: 24,
         borderBottomRightRadius: 24,
-        paddingTop: 56, // Padding cho tai thỏ/status bar
+        paddingTop: 56,
         paddingHorizontal: 16,
         paddingBottom: 24,
         ...(Platform.OS === 'web'

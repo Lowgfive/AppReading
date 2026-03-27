@@ -3,6 +3,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useToast } from '@/context/ToastContext';
 import { AppService } from '@/services/app.service';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { BarChart3, BookOpen, FileText, MessageSquare, Plus, Users } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
@@ -108,7 +109,7 @@ export default function AdminDashboardScreen() {
                 <View className="flex-row items-start justify-between mb-6">
                     <View className="flex-1 pr-4">
                         <Text className="text-4xl font-bold leading-tight" style={{ color: colors.text }}>
-                            Bảng điều khiển Admin
+                            Admin Dashboard
                         </Text>
                         <Text className="text-base mt-2" style={{ color: colors.subtext }}>
                             Quản lý nội dung nền tảng
@@ -131,10 +132,17 @@ export default function AdminDashboardScreen() {
                     {statsConfig.map((item) => {
                         const Icon = item.icon;
                         const value = dashboard?.[item.key] ?? 0;
+                        const canOpenStories = item.key === 'totalStories' || item.key === 'totalChapters';
 
                         return (
-                            <View
+                            <TouchableOpacity
                                 key={item.key}
+                                onPress={() => {
+                                    if (canOpenStories) {
+                                        router.push('/admin/stories' as any);
+                                    }
+                                }}
+                                activeOpacity={canOpenStories ? 0.8 : 1}
                                 className="w-[48%] rounded-3xl border p-5 mb-4"
                                 style={{ backgroundColor: colors.card, borderColor: colors.border }}
                             >
@@ -148,13 +156,29 @@ export default function AdminDashboardScreen() {
                                 <Text className="text-4xl font-bold" style={{ color: colors.text }}>
                                     {value}
                                 </Text>
-                            </View>
+                            </TouchableOpacity>
                         );
                     })}
                 </View>
 
-                <View
+                <TouchableOpacity
+                    onPress={() => router.push('/admin/stories' as any)}
                     className="rounded-3xl border p-5 mt-2"
+                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                >
+                    <View className="flex-row items-center mb-3">
+                        <BookOpen color={colors.accent} size={22} />
+                        <Text className="text-2xl font-bold ml-3" style={{ color: colors.text }}>
+                            Quản lý truyện
+                        </Text>
+                    </View>
+                    <Text className="text-sm leading-6" style={{ color: colors.subtext }}>
+                        Xem, thêm, sửa, xóa truyện và quản lý các chương.
+                    </Text>
+                </TouchableOpacity>
+
+                <View
+                    className="rounded-3xl border p-5 mt-4"
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 >
                     <View className="flex-row items-center mb-3">
@@ -179,17 +203,12 @@ export default function AdminDashboardScreen() {
                                         <Text className="text-base font-semibold" style={{ color: colors.text }}>
                                             {item.title || 'Truyện không xác định'}
                                         </Text>
-                                        <Text className="text-xs mt-1" style={{ color: colors.subtext }}>
-                                            {item.storyId}
-                                        </Text>
                                     </View>
-                                    <View className="items-end">
-                                        <Text className="text-2xl font-bold" style={{ color: colors.accent }}>
-                                            {item.totalUnlocked}
+                                    <View className="flex-row items-center">
+                                        <Text className="text-2xl font-bold mr-2" style={{ color: colors.accent }}>
+                                            {item.totalUnlocked * 50}
                                         </Text>
-                                        <Text className="text-xs mt-1" style={{ color: colors.subtext }}>
-                                            lượt mở khóa
-                                        </Text>
+                                        <Ionicons name="diamond" size={16} color={colors.accent} />
                                     </View>
                                 </View>
                             ))}

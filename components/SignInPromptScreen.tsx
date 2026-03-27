@@ -2,17 +2,14 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { BookOpen } from "lucide-react-native";
 import { router } from "expo-router";
+import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
 import AppHeader from "@/components/AppHeader";
 import SideMenu from "@/components/SideMenu";
 
-/**
- * Full-screen prompt asking the user to sign in.
- * Use when a screen requires auth (e.g. Library, Profile, History).
- * Parent should check: if (!user) return <SignInPromptScreen />;
- */
 export default function SignInPromptScreen() {
     const { colors } = useTheme();
+    const { t } = useLanguage();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     return (
@@ -31,14 +28,14 @@ export default function SignInPromptScreen() {
                     className="text-[28px] font-serif font-bold mb-4 text-center"
                     style={{ color: colors.text }}
                 >
-                    Welcome to Storytime
+                    {t("auth.welcome")}
                 </Text>
 
                 <Text
                     className="text-[15px] text-center mb-8 font-inter leading-6"
                     style={{ color: colors.subtext }}
                 >
-                    Sign in to access your favorites, reading history, and personalized recommendations.
+                    {t("auth.signInPrompt")}
                 </Text>
 
                 <View className="flex-row gap-4 w-full justify-center">
@@ -47,7 +44,7 @@ export default function SignInPromptScreen() {
                         className="py-[12px] px-8 rounded-xl items-center justify-center"
                         style={{ backgroundColor: colors.accent }}
                     >
-                        <Text className="text-black font-inter font-bold text-[15px]">Sign In</Text>
+                        <Text className="text-black font-inter font-bold text-[15px]">{t("auth.signIn")}</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -59,7 +56,7 @@ export default function SignInPromptScreen() {
                             className="font-inter font-bold text-[15px]"
                             style={{ color: colors.text }}
                         >
-                            Create Account
+                            {t("auth.createAccount")}
                         </Text>
                     </TouchableOpacity>
                 </View>

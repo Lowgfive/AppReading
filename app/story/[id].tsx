@@ -1,14 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, ImageBackground, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
+import React, { useEffect, useState, useContext } from 'react';
+import { View, Text, ScrollView, ImageBackground, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Play, Heart, Star, Eye, BookOpen, Clock, ChevronRight, ChevronLeft, Lock, Gem } from 'lucide-react-native';
+import { Play, Heart, Eye, BookOpen, Clock, ChevronRight, ChevronLeft, Lock, Gem } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppService } from '@/services/app.service';
 import { useTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { AppContext } from '@/context/AppContext';
-import { useContext } from 'react';
 import { useToast } from '@/context/ToastContext';
 
 export default function StoryDetailScreen() {
@@ -18,13 +17,12 @@ export default function StoryDetailScreen() {
     const { user } = useAuth();
     const { showToast } = useToast();
     const insets = useSafeAreaInsets();
-    
-    // Defaulting context to empty objects/functions in case it's not wrapped (though it is)
+
     const appContext = useContext(AppContext);
     const balance = appContext?.balance ?? 0;
     const setBalance = appContext?.setBalance;
     const fetchBalance = appContext?.fetchBalance || (async () => {});
-    
+
     const [story, setStory] = useState<any>(null);
     const [chapters, setChapters] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -36,7 +34,7 @@ export default function StoryDetailScreen() {
         if (purchaseTrigger > 0) {
             fetchBalance();
         }
-    }, [purchaseTrigger]);
+    }, [purchaseTrigger, fetchBalance]);
 
     useEffect(() => {
         if (storyData) {
@@ -70,7 +68,6 @@ export default function StoryDetailScreen() {
 
         const chapterPrice = chapter.price || 50;
 
-        // 3. If the user's balance is NOT enough
         if (balance < chapterPrice) {
             showToast("Your balance is not enough to buy this chapter", "error");
             return;
@@ -78,22 +75,14 @@ export default function StoryDetailScreen() {
 
         try {
             setLoading(true);
-
-            // 1. Call the API to buy the chapter directly (no confirmation)
             await AppService.unlockChapter(id as string, chapter._id);
-            
-            // 4. If the purchase succeeds
             showToast("Chapter purchased successfully", "success");
 
-            // 2. Decrease the user's balance and update UI immediately
             if (setBalance) {
                 setBalance((prev: number | null) => (prev !== null ? prev - chapterPrice : null));
             }
 
-            // 5. Trigger useEffect to refresh balance from server
             setPurchaseTrigger(prev => prev + 1);
-
-            // 7. Update the chapter state so the user can read it immediately
             await fetchChapters();
         } catch (error: any) {
             const errorMsg = error?.response?.data?.message || "Failed to unlock chapter. Please check your balance.";
@@ -102,9 +91,9 @@ export default function StoryDetailScreen() {
             setLoading(false);
         }
     };
+
     const checkIfLiked = async () => {
         try {
-            // Use the route param (id) to avoid missing the story object when navigating directly
             if (user && id) {
                 const liked = await AppService.checkIfLiked(id as string);
                 setIsLiked(liked);
@@ -155,7 +144,6 @@ export default function StoryDetailScreen() {
     };
 
     if (!story) {
-        // simplified skeleton mimic header and a few lines
         return (
             <ScrollView className="flex-1" style={{ backgroundColor: colors.background }}>
                 <View className="w-full h-[400px] bg-gray-700 animate-pulse" />
@@ -170,14 +158,19 @@ export default function StoryDetailScreen() {
         );
     }
 
-    const author = story.userId?.username || "Tác giả ẩn danh";
-    const rating = (story.rating || 4.8).toFixed(1);
+    const author = story.userId?.username || "Unknown author";
+    const likes = story.likeCount || 0;
     const views = story.viewCount >= 1000 ? `${(story.viewCount / 1000).toFixed(1)}K` : (story.viewCount || 0);
-    const formatDate = (dateString: string) => {
+
+    const formatDate = (dateString?: string) => {
         if (!dateString) return '';
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     };
+
+    const formattedUpdatedDate = formatDate(story.createdDate || story.updatedAt);
+    const displayType = story.type || "Unknown";
+    const displayDescription = story.description || "No description available.";
 
     const gradientColors = (isDarkMode
         ? ['rgba(18,18,18,0.4)', 'rgba(18,18,18,0.8)', '#121212']
@@ -186,6 +179,23 @@ export default function StoryDetailScreen() {
     const fallbackGradientColors = (isDarkMode
         ? ['#2A2A2A', '#1A1A1A', '#121212']
         : ['#E5E5E5', '#F5F5F5', '#FFFFFF']) as [string, string, string];
+
+    const renderStats = () => (
+        <>
+            <View className="flex-row items-center">
+                <Heart color={colors.accentLight} fill={colors.accentLight} size={14} />
+                <Text className="text-xs ml-[6px] font-inter" style={{ color: colors.text }}>{likes} likes</Text>
+            </View>
+            <View className="flex-row items-center">
+                <Eye color={colors.iconMuted} size={14} />
+                <Text className="text-xs ml-[6px] font-inter" style={{ color: colors.text }}>{views} views</Text>
+            </View>
+            <View className="flex-row items-center">
+                <BookOpen color={colors.iconMuted} size={14} />
+                <Text className="text-xs ml-[6px] font-inter" style={{ color: colors.text }}>{chapters.length || story.chapterCount || story.totalChapters || 0} chapters</Text>
+            </View>
+        </>
+    );
 
     return (
         <View className="flex-1" style={{ backgroundColor: colors.background }}>
@@ -198,11 +208,7 @@ export default function StoryDetailScreen() {
             >
                 <View className="w-full h-[400px]">
                     {story.image ? (
-                        <ImageBackground
-                            source={{ uri: story.image }}
-                            className="w-full h-full"
-                            resizeMode="cover"
-                        >
+                        <ImageBackground source={{ uri: story.image }} className="w-full h-full" resizeMode="cover">
                             <LinearGradient
                                 colors={gradientColors}
                                 className="w-full h-full px-5 pb-4 justify-between"
@@ -222,31 +228,22 @@ export default function StoryDetailScreen() {
 
                                     <View className="flex-row gap-2 mb-4">
                                         <View className="border rounded-full px-4 py-[3px]" style={{ borderColor: colors.subtext }}>
-                                            <Text className="text-xs font-semibold font-inter" style={{ color: colors.text }}>{story.type || "Fantasy"}</Text>
+                                            <Text className="text-xs font-semibold font-inter" style={{ color: colors.text }}>{displayType}</Text>
                                         </View>
                                     </View>
 
                                     <View className="flex-row items-center gap-4 flex-wrap">
-                                        <View className="flex-row items-center">
-                                            <Star color={colors.accentLight} fill={colors.accentLight} size={14} />
-                                            <Text className="text-xs ml-[6px] font-inter" style={{ color: colors.text }}>{rating} rating</Text>
-                                        </View>
-                                        <View className="flex-row items-center">
-                                            <Eye color={colors.iconMuted} size={14} />
-                                            <Text className="text-xs ml-[6px] font-inter" style={{ color: colors.text }}>{views} views</Text>
-                                        </View>
-                                        <View className="flex-row items-center">
-                                            <BookOpen color={colors.iconMuted} size={14} />
-                                            <Text className="text-xs ml-[6px] font-inter" style={{ color: colors.text }}>{chapters.length || story.chapterCount || 0} chapters</Text>
-                                        </View>
+                                        {renderStats()}
                                     </View>
 
-                                    <View className="flex-row items-center mt-3">
-                                        <Clock color={colors.iconMuted} size={14} />
-                                        <Text className="text-xs ml-[6px] font-inter" style={{ color: colors.subtext }}>
-                                            Updated {formatDate(story.createdDate || story.updatedAt || new Date().toISOString())}
-                                        </Text>
-                                    </View>
+                                    {formattedUpdatedDate ? (
+                                        <View className="flex-row items-center mt-3">
+                                            <Clock color={colors.iconMuted} size={14} />
+                                            <Text className="text-xs ml-[6px] font-inter" style={{ color: colors.subtext }}>
+                                                Updated {formattedUpdatedDate}
+                                            </Text>
+                                        </View>
+                                    ) : null}
                                 </View>
                             </LinearGradient>
                         </ImageBackground>
@@ -270,46 +267,36 @@ export default function StoryDetailScreen() {
 
                                 <View className="flex-row gap-2 mb-4">
                                     <View className="border rounded-full px-4 py-[3px]" style={{ borderColor: colors.subtext }}>
-                                        <Text className="text-xs font-semibold font-inter" style={{ color: colors.text }}>{story.type || "Fantasy"}</Text>
+                                        <Text className="text-xs font-semibold font-inter" style={{ color: colors.text }}>{displayType}</Text>
                                     </View>
                                 </View>
 
                                 <View className="flex-row items-center gap-4 flex-wrap">
-                                    <View className="flex-row items-center">
-                                        <Star color={colors.accentLight} fill={colors.accentLight} size={14} />
-                                        <Text className="text-xs ml-[6px] font-inter" style={{ color: colors.text }}>{rating} rating</Text>
-                                    </View>
-                                    <View className="flex-row items-center">
-                                        <Eye color={colors.iconMuted} size={14} />
-                                        <Text className="text-xs ml-[6px] font-inter" style={{ color: colors.text }}>{views} views</Text>
-                                    </View>
-                                    <View className="flex-row items-center">
-                                        <BookOpen color={colors.iconMuted} size={14} />
-                                        <Text className="text-xs ml-[6px] font-inter" style={{ color: colors.text }}>{chapters.length || story.chapterCount || 0} chapters</Text>
-                                    </View>
+                                    {renderStats()}
                                 </View>
 
-                                <View className="flex-row items-center mt-3">
-                                    <Clock color={colors.iconMuted} size={14} />
-                                    <Text className="text-xs ml-[6px] font-inter" style={{ color: colors.subtext }}>
-                                        Updated {formatDate(story.createdDate || story.updatedAt || new Date().toISOString())}
-                                    </Text>
-                                </View>
+                                {formattedUpdatedDate ? (
+                                    <View className="flex-row items-center mt-3">
+                                        <Clock color={colors.iconMuted} size={14} />
+                                        <Text className="text-xs ml-[6px] font-inter" style={{ color: colors.subtext }}>
+                                            Updated {formattedUpdatedDate}
+                                        </Text>
+                                    </View>
+                                ) : null}
                             </View>
                         </LinearGradient>
                     )}
                 </View>
 
-                {/* Content Section */}
                 <View className="px-6 pt-5 pb-2">
                     <Text className="text-[15px] leading-[26px] mb-7 font-inter" style={{ color: colors.text }}>
-                        {story.description || "In a world where books have become forbidden, one librarian guards the last sanctuary of stories. When a mysterious stranger arrives seeking a particular volume, she must decide whether to protect her secrets or risk everything for the truth."}
+                        {displayDescription}
                     </Text>
 
                     <View className="gap-3 mb-10 items-start">
-                        <TouchableOpacity 
+                        <TouchableOpacity
                             onPress={handleReadNow}
-                            className="flex-row items-center pl-6 pr-8 py-[14px] rounded-xl flex min-w-[190px]" 
+                            className="flex-row items-center pl-6 pr-8 py-[14px] rounded-xl flex min-w-[190px]"
                             style={{ backgroundColor: colors.accent }}
                         >
                             <Play fill="#000" color="#000" size={16} className="mr-3" />
@@ -323,7 +310,7 @@ export default function StoryDetailScreen() {
                             onPress={handleAddToFavorites}
                             className="flex-row items-center pl-6 pr-8 border py-[14px] rounded-xl bg-transparent min-w-[190px]"
                             style={{
-                                borderColor: isLiked ? colors.accent : colors.accent,
+                                borderColor: colors.accent,
                                 backgroundColor: isLiked ? `${colors.accent}10` : 'transparent'
                             }}
                         >
@@ -331,7 +318,7 @@ export default function StoryDetailScreen() {
                                 <ActivityIndicator size={16} color={colors.accent} className="mr-3" />
                             ) : (
                                 <Heart
-                                    color={isLiked ? colors.accent : colors.accent}
+                                    color={colors.accent}
                                     fill={isLiked ? colors.accent : 'transparent'}
                                     size={16}
                                     className="mr-3"
@@ -378,13 +365,13 @@ export default function StoryDetailScreen() {
                                             </Text>
                                             <View className="flex-row items-center flex-wrap">
                                                 <Text className="text-[13px] font-inter" style={{ color: colors.subtext }}>
-                                                    {chapter.wordCount ? `${chapter.wordCount} words • ` : ''}{formatDate(chapter.createdAt || new Date().toISOString())}
+                                                    {chapter.wordCount ? `${chapter.wordCount} words • ` : ''}{formatDate(chapter.createdAt)}
                                                 </Text>
                                                 {chapter.isPay === false && (
                                                     <View className="flex-row items-center ml-2">
                                                         <Gem size={12} color="#F59E0B" />
                                                         <Text className="text-[13px] ml-1 font-inter font-bold text-amber-500">
-                                                            50 stones
+                                                            {chapter.price || 50} stones
                                                         </Text>
                                                     </View>
                                                 )}

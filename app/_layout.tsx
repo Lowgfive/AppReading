@@ -7,6 +7,7 @@ import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_7
 import AppProvider from '@/context/AppContext';
 import AuthProvider from '@/context/AuthContext';
 import AuthFormProvider from '@/context/AuthFormContext';
+import { LanguageProvider } from '@/context/LanguageContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { ToastProvider } from '@/context/ToastContext';
 
@@ -34,11 +35,13 @@ export default function Layout() {
         <ThemeProvider>
             <ToastProvider>
                 <AuthProvider>
-                    <AppProvider>
-                        <AuthFormProvider>
-                            <Stack screenOptions={{ headerShown: false, animation: 'fade' }} />
-                        </AuthFormProvider>
-                    </AppProvider>
+                    <LanguageProvider>
+                        <AppProvider>
+                            <AuthFormProvider>
+                                <Stack screenOptions={{ headerShown: false, animation: 'fade' }} />
+                            </AuthFormProvider>
+                        </AppProvider>
+                    </LanguageProvider>
                 </AuthProvider>
             </ToastProvider>
         </ThemeProvider>

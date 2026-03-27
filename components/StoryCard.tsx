@@ -12,8 +12,8 @@ type StoryCardProps = {
 export default function StoryCard({ story, onPress }: StoryCardProps) {
     const { colors } = useTheme();
 
-    const author = story.userId?.username || "Tác giả ẩn danh";
-    const rating = (story.likeCount || 4.8).toFixed(1);
+    const author = story.userId?.username || "Unknown author";
+    const likes = story.likeCount || 0;
     const views = story.viewCount >= 1000 ? `${(story.viewCount / 1000).toFixed(1)}K` : (story.viewCount || 0);
     const comments = story.commentCount || 0;
 
@@ -22,7 +22,7 @@ export default function StoryCard({ story, onPress }: StoryCardProps) {
             className="mr-4 w-36 rounded-xl overflow-hidden mb-2"
             onPress={onPress}
         >
-            <View 
+            <View
                 className="w-full h-48 rounded-xl overflow-hidden"
                 style={{ backgroundColor: colors.cardImage }}
             >
@@ -40,7 +40,7 @@ export default function StoryCard({ story, onPress }: StoryCardProps) {
                             <View className="mt-auto items-start">
                                 <View className="px-3 py-1 rounded-full border border-gray-700 mb-1" style={{ backgroundColor: 'rgba(18,18,18,0.9)' }}>
                                     <Text className="text-gray-200 text-[10px] font-bold font-inter">
-                                        {story.type || "Fantasy"}
+                                        {story.type || "Unknown"}
                                     </Text>
                                 </View>
                             </View>
@@ -48,7 +48,7 @@ export default function StoryCard({ story, onPress }: StoryCardProps) {
                     </ImageBackground>
                 ) : (
                     <View className="w-full h-full justify-between p-2" style={{ backgroundColor: colors.cardImage }}>
-                        <View className="self-start px-3 py-1 rounded-full" style={{ backgroundColor: story.status === 'COMPLETED' ? '#38A169' : '#E08A2A' }}>
+                        <View className="self-start px-3 py-1 rounded-full" style={{ backgroundColor: story.status === 'COMPLETED' || story.status === 'Completed' ? '#38A169' : '#E08A2A' }}>
                             <Text className="text-[10px] font-bold font-inter" style={{ color: colors.text }}>
                                 {story.status === 'Completed' || story.status === 'COMPLETED' ? 'Completed' : 'Ongoing'}
                             </Text>
@@ -59,7 +59,7 @@ export default function StoryCard({ story, onPress }: StoryCardProps) {
                         <View className="mt-auto items-start">
                             <View className="px-3 py-1 rounded-full border border-gray-700 mb-1" style={{ backgroundColor: colors.background }}>
                                 <Text className="text-[10px] font-bold font-inter" style={{ color: colors.text }}>
-                                    {story.type || "Fantasy"}
+                                    {story.type || "Unknown"}
                                 </Text>
                             </View>
                         </View>
@@ -68,15 +68,15 @@ export default function StoryCard({ story, onPress }: StoryCardProps) {
             </View>
 
             <View className="mt-2 px-1">
-                <Text 
-                    className="font-inter font-bold text-[15px] mb-1 leading-tight" 
+                <Text
+                    className="font-inter font-bold text-[15px] mb-1 leading-tight"
                     numberOfLines={1}
                     style={{ color: colors.accentLight }}
                 >
                     {story.name}
                 </Text>
-                <Text 
-                    className="text-[11px] mb-2 font-inter" 
+                <Text
+                    className="text-[11px] mb-2 font-inter"
                     numberOfLines={1}
                     style={{ color: colors.subtext }}
                 >
@@ -86,7 +86,7 @@ export default function StoryCard({ story, onPress }: StoryCardProps) {
                     <View className="flex-row items-center">
                         <Heart color={colors.accentLight} fill={colors.accentLight} size={12} />
                         <Text className="text-[10px] ml-1 font-inter" style={{ color: colors.subtext }}>
-                            {rating}
+                            {likes}
                         </Text>
                     </View>
                     <View className="flex-row items-center">

@@ -1,11 +1,13 @@
 import AppHeader from '@/components/AppHeader';
+import CoverImagePicker from '@/components/CoverImagePicker';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useToast } from '@/context/ToastContext';
 import { AppService } from '@/services/app.service';
-import { router } from 'expo-router';
-import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const GENRE_OPTIONS = [
     'Fantasy',
@@ -23,16 +25,38 @@ const GENRE_OPTIONS = [
 ];
 
 export default function CreateStoryScreen() {
+    const params = useLocalSearchParams<{ story?: string }>();
     const { colors } = useTheme();
     const { user, isLoading } = useAuth();
     const { showToast } = useToast();
     const [title, setTitle] = useState('');
     const [author, setAuthor] = useState('');
     const [description, setDescription] = useState('');
-    const [coverImageUrl, setCoverImageUrl] = useState('');
+    const [selectedFile, setSelectedFile] = useState<ImagePicker.ImagePickerAsset | null>(null);
+    const [existingCoverImage, setExistingCoverImage] = useState('');
     const [status, setStatus] = useState<'ongoing' | 'completed'>('ongoing');
     const [genres, setGenres] = useState<string[]>(['Fantasy']);
     const [submitting, setSubmitting] = useState(false);
+
+    const editingStory = useMemo(() => {
+        if (!params.story) return null;
+        try {
+            return JSON.parse(params.story);
+        } catch {
+            return null;
+        }
+    }, [params.story]);
+
+    useEffect(() => {
+        if (!editingStory) return;
+
+        setTitle(editingStory.title || editingStory.name || '');
+        setAuthor(editingStory.author || '');
+        setDescription(editingStory.description || '');
+        setExistingCoverImage(editingStory.coverImageUrl || editingStory.image || '');
+        setStatus(editingStory.status === 'Completed' ? 'completed' : 'ongoing');
+        setGenres(Array.isArray(editingStory.genres) && editingStory.genres.length ? editingStory.genres : ['Fantasy']);
+    }, [editingStory]);
 
     const canSubmit = useMemo(() => {
         return title.trim().length > 0 && author.trim().length > 0 && !submitting;
@@ -52,18 +76,39 @@ export default function CreateStoryScreen() {
 
         try {
             setSubmitting(true);
-            await AppService.createAdminStory({
+
+            let coverImageUrl = existingCoverImage;
+            if (selectedFile?.uri) {
+                coverImageUrl = await AppService.uploadStoryCover({
+                    uri: selectedFile.uri,
+                    fileName: selectedFile.fileName,
+                    mimeType: selectedFile.mimeType,
+                    file: Platform.OS === 'web' ? selectedFile.file : undefined,
+                });
+            }
+
+            const payload = {
                 title: title.trim(),
                 author: author.trim(),
                 description: description.trim(),
-                coverImageUrl: coverImageUrl.trim(),
+                coverImageUrl,
                 status,
                 genres,
-            });
-            router.replace('/admin' as any);
+            };
+
+            if (editingStory?._id) {
+                await AppService.updateAdminStory(editingStory._id, payload);
+                showToast('Cập nhật truyện thành công.', 'success');
+            } else {
+                await AppService.createAdminStory(payload);
+                showToast('Tạo truyện thành công.', 'success');
+            }
+
+            router.replace('/admin/stories' as any);
         } catch (error) {
-            console.error('Failed to create story', error);
-            showToast('Không thể tạo truyện mới.', 'error');
+            console.error('Failed to submit story', error);
+            const message = error instanceof Error ? error.message : 'Không thể lưu truyện.';
+            showToast(message, 'error');
         } finally {
             setSubmitting(false);
         }
@@ -102,7 +147,7 @@ export default function CreateStoryScreen() {
                 contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 18, paddingBottom: 32 }}
             >
                 <Text className="text-4xl font-bold" style={{ color: colors.text }}>
-                    Thêm truyện mới
+                    {editingStory ? 'Cập nhật truyện' : 'Thêm truyện mới'}
                 </Text>
 
                 <View
@@ -157,20 +202,18 @@ export default function CreateStoryScreen() {
                         />
                     </View>
 
-                    <View className="mb-5">
-                        <Text className="text-base font-semibold mb-3" style={{ color: colors.text }}>
-                            URL ảnh bìa
-                        </Text>
-                        <TextInput
-                            value={coverImageUrl}
-                            onChangeText={setCoverImageUrl}
-                            placeholder="https://..."
-                            placeholderTextColor={colors.subtext}
-                            autoCapitalize="none"
-                            className="rounded-2xl px-4 py-4 text-[15px]"
-                            style={{ backgroundColor: colors.background, color: colors.text, borderWidth: 1, borderColor: colors.border }}
-                        />
-                    </View>
+                    <CoverImagePicker
+                        colors={colors}
+                        disabled={submitting}
+                        isUploading={submitting}
+                        selectedFile={selectedFile}
+                        currentImageUri={existingCoverImage}
+                        title="Ảnh bìa"
+                        emptyTitle="Chọn ảnh bìa từ thiết bị"
+                        helperText="Ảnh sẽ được upload trực tiếp lên Cloudinary trước khi gửi dữ liệu truyện."
+                        onChange={setSelectedFile}
+                        onError={(message) => showToast(message, 'error')}
+                    />
 
                     <View className="mb-5">
                         <Text className="text-base font-semibold mb-3" style={{ color: colors.text }}>
@@ -239,7 +282,7 @@ export default function CreateStoryScreen() {
                             <ActivityIndicator color="#111111" />
                         ) : (
                             <Text className="text-base font-bold" style={{ color: '#111111' }}>
-                                Tạo truyện
+                                {editingStory ? 'Lưu cập nhật' : 'Đăng truyện'}
                             </Text>
                         )}
                     </TouchableOpacity>

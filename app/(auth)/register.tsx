@@ -4,10 +4,12 @@ import { useRouter } from 'expo-router';
 import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { AuthService } from '../../services/auth.service';
 import AppHeader from '@/components/AppHeader';
+import { useTheme } from '@/context/ThemeContext';
 import { useToast } from '@/context/ToastContext';
 
 export default function RegisterScreen() {
     const router = useRouter();
+    const { colors } = useTheme();
     const { showToast } = useToast();
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
@@ -46,20 +48,20 @@ export default function RegisterScreen() {
     }, []);
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <AppHeader />
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <View style={styles.content}>
                     {formReady ? (
-                        <View style={styles.card}>
+                        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
                             <View style={styles.inputContainer}>
-                                <Text style={styles.label}>Username</Text>
-                                <View style={styles.inputWrapper}>
-                                    <User size={20} color="#9CA3AF" style={styles.inputIcon} />
+                                <Text style={[styles.label, { color: colors.text }]}>Username</Text>
+                                <View style={[styles.inputWrapper, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+                                    <User size={20} color={colors.iconMuted} style={styles.inputIcon} />
                                     <TextInput
-                                        style={styles.input}
+                                        style={[styles.input, { color: colors.text }]}
                                         placeholder="Choose a username"
-                                        placeholderTextColor="#6B7280"
+                                        placeholderTextColor={colors.iconMuted}
                                         autoCapitalize="none"
                                         value={username}
                                         onChangeText={setUsername}
@@ -68,13 +70,13 @@ export default function RegisterScreen() {
                             </View>
 
                             <View style={styles.inputContainer}>
-                                <Text style={styles.label}>Email</Text>
-                                <View style={styles.inputWrapper}>
-                                    <Mail size={20} color="#9CA3AF" style={styles.inputIcon} />
+                                <Text style={[styles.label, { color: colors.text }]}>Email</Text>
+                                <View style={[styles.inputWrapper, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+                                    <Mail size={20} color={colors.iconMuted} style={styles.inputIcon} />
                                     <TextInput
-                                        style={styles.input}
+                                        style={[styles.input, { color: colors.text }]}
                                         placeholder="Enter your email"
-                                        placeholderTextColor="#6B7280"
+                                        placeholderTextColor={colors.iconMuted}
                                         keyboardType="email-address"
                                         autoCapitalize="none"
                                         value={email}
@@ -84,35 +86,35 @@ export default function RegisterScreen() {
                             </View>
 
                             <View style={styles.inputContainer}>
-                                <Text style={styles.label}>Password</Text>
-                                <View style={styles.inputWrapper}>
-                                    <Lock size={20} color="#9CA3AF" style={styles.inputIcon} />
+                                <Text style={[styles.label, { color: colors.text }]}>Password</Text>
+                                <View style={[styles.inputWrapper, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+                                    <Lock size={20} color={colors.iconMuted} style={styles.inputIcon} />
                                     <TextInput
-                                        style={styles.input}
+                                        style={[styles.input, { color: colors.text }]}
                                         placeholder="Create a password"
-                                        placeholderTextColor="#6B7280"
+                                        placeholderTextColor={colors.iconMuted}
                                         secureTextEntry={!showPassword}
                                         value={password}
                                         onChangeText={setPassword}
                                     />
                                     <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
                                         {showPassword ? (
-                                            <Eye size={20} color="#9CA3AF" />
+                                            <Eye size={20} color={colors.iconMuted} />
                                         ) : (
-                                            <EyeOff size={20} color="#9CA3AF" />
+                                            <EyeOff size={20} color={colors.iconMuted} />
                                         )}
                                     </Pressable>
                                 </View>
                             </View>
 
                             <View style={styles.inputContainer}>
-                                <Text style={styles.label}>Confirm Password</Text>
-                                <View style={styles.inputWrapper}>
-                                    <Lock size={20} color="#9CA3AF" style={styles.inputIcon} />
+                                <Text style={[styles.label, { color: colors.text }]}>Confirm Password</Text>
+                                <View style={[styles.inputWrapper, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+                                    <Lock size={20} color={colors.iconMuted} style={styles.inputIcon} />
                                     <TextInput
-                                        style={styles.input}
+                                        style={[styles.input, { color: colors.text }]}
                                         placeholder="Confirm your password"
-                                        placeholderTextColor="#6B7280"
+                                        placeholderTextColor={colors.iconMuted}
                                         secureTextEntry={!showPassword}
                                         value={confirmPassword}
                                         onChangeText={setConfirmPassword}
@@ -121,26 +123,26 @@ export default function RegisterScreen() {
                             </View>
 
                             <Pressable
-                                style={[styles.button, loading && styles.buttonDisabled]}
+                                style={[styles.button, { backgroundColor: colors.accent }, loading && styles.buttonDisabled]}
                                 onPress={handleRegister}
                                 disabled={loading}
                             >
-                                <Text style={styles.buttonText}>{loading ? 'Creating...' : 'Create Account'}</Text>
+                                <Text style={[styles.buttonText, { color: '#111111' }]}>{loading ? 'Creating...' : 'Create Account'}</Text>
                             </Pressable>
 
                             <View style={styles.footer}>
-                                <Text style={styles.footerText}>Already have an account? </Text>
+                                <Text style={[styles.footerText, { color: colors.subtext }]}>Already have an account? </Text>
                                 <Pressable onPress={() => router.push('/(auth)/login')}>
-                                    <Text style={styles.footerLink}>Sign in</Text>
+                                    <Text style={[styles.footerLink, { color: colors.accent }]}>Sign in</Text>
                                 </Pressable>
                             </View>
                         </View>
                     ) : (
-                        <View style={[styles.card, { padding: 24 }]}>                        
-                            <View style={{ height: 20, backgroundColor: '#333', borderRadius: 4, marginBottom: 20 }} />
-                            <View style={{ height: 20, backgroundColor: '#333', borderRadius: 4, marginBottom: 20 }} />
-                            <View style={{ height: 20, backgroundColor: '#333', borderRadius: 4, marginBottom: 20 }} />
-                            <View style={{ height: 50, backgroundColor: '#333', borderRadius: 8 }} />
+                        <View style={[styles.card, { padding: 24, backgroundColor: colors.card, borderColor: colors.border }]}>
+                            <View style={{ height: 20, backgroundColor: colors.border, borderRadius: 4, marginBottom: 20 }} />
+                            <View style={{ height: 20, backgroundColor: colors.border, borderRadius: 4, marginBottom: 20 }} />
+                            <View style={{ height: 20, backgroundColor: colors.border, borderRadius: 4, marginBottom: 20 }} />
+                            <View style={{ height: 50, backgroundColor: colors.border, borderRadius: 8 }} />
                         </View>
                     )}
                 </View>
@@ -152,7 +154,6 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#121212',
     },
     scrollContent: {
         flexGrow: 1,
@@ -163,45 +164,15 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         paddingVertical: 40,
     },
-    headerContainer: {
-        alignItems: 'center',
-        marginBottom: 40,
-    },
-    logoContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    logoText: {
-        color: '#FFFFFF',
-        fontSize: 28,
-        fontWeight: '700',
-        marginLeft: 8,
-        fontFamily: 'serif',
-    },
-    title: {
-        color: '#FFFFFF',
-        fontSize: 26,
-        fontWeight: '600',
-        marginBottom: 8,
-        fontFamily: 'serif',
-    },
-    subtitle: {
-        color: '#9CA3AF',
-        fontSize: 14,
-    },
     card: {
-        backgroundColor: '#1A1A1A',
         borderRadius: 16,
         padding: 24,
         borderWidth: 1,
-        borderColor: '#333333',
     },
     inputContainer: {
         marginBottom: 20,
     },
     label: {
-        color: '#FFFFFF',
         fontSize: 14,
         fontWeight: '500',
         marginBottom: 8,
@@ -209,9 +180,7 @@ const styles = StyleSheet.create({
     inputWrapper: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#121212',
         borderWidth: 1,
-        borderColor: '#333333',
         borderRadius: 8,
         height: 50,
         paddingHorizontal: 12,
@@ -221,14 +190,12 @@ const styles = StyleSheet.create({
     },
     input: {
         flex: 1,
-        color: '#FFFFFF',
         fontSize: 15,
     },
     eyeIcon: {
         padding: 8,
     },
     button: {
-        backgroundColor: '#EFA02A',
         borderRadius: 8,
         height: 50,
         justifyContent: 'center',
@@ -239,7 +206,6 @@ const styles = StyleSheet.create({
         opacity: 0.7,
     },
     buttonText: {
-        color: '#121212',
         fontSize: 16,
         fontWeight: '600',
     },
@@ -249,11 +215,9 @@ const styles = StyleSheet.create({
         marginTop: 24,
     },
     footerText: {
-        color: '#9CA3AF',
         fontSize: 14,
     },
     footerLink: {
-        color: '#EFA02A',
         fontSize: 14,
         fontWeight: '500',
     }

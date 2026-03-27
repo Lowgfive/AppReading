@@ -2,6 +2,23 @@ import axios from 'axios';
 import { AuthService } from './auth.service';
 
 export const API_URL = process.env.EXPO_PUBLIC_API_URL;
+const CLOUDINARY_CLOUD_NAME = 'dwqmg5d1f';
+const CLOUDINARY_UPLOAD_PRESET = 'my_upload';
+const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+
+type UploadStoryCoverInput = {
+    uri: string;
+    fileName?: string | null;
+    mimeType?: string | null;
+    file?: File;
+};
+
+type CloudinaryUploadResponse = {
+    secure_url?: string;
+    error?: {
+        message?: string;
+    };
+};
 
 export const AppService = {
     async getHomeStories() {
@@ -81,6 +98,13 @@ export const AppService = {
         });
         return res.data;
     },
+    async getAdminStories() {
+        const token = await AuthService.getToken();
+        const res = await axios.get(`${API_URL}/admin/stories`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return res.data;
+    },
     async createAdminStory(payload: {
         title: string;
         author: string;
@@ -94,6 +118,51 @@ export const AppService = {
             headers: { Authorization: `Bearer ${token}` }
         });
         return res.data;
+    },
+    async updateAdminStory(storyId: string, payload: {
+        title: string;
+        author: string;
+        description: string;
+        coverImageUrl: string;
+        status: 'ongoing' | 'completed';
+        genres: string[];
+    }) {
+        const token = await AuthService.getToken();
+        const res = await axios.put(`${API_URL}/admin/stories/${storyId}`, payload, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return res.data;
+    },
+    async uploadImageToCloudinary(input: UploadStoryCoverInput) {
+        const formData = new FormData();
+
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+        if (input.file) {
+            formData.append('file', input.file);
+        } else {
+            formData.append('file', {
+                uri: input.uri,
+                name: input.fileName || `story-cover-${Date.now()}.jpg`,
+                type: input.mimeType || 'image/jpeg',
+            } as any);
+        }
+
+        const response = await fetch(CLOUDINARY_UPLOAD_URL, {
+            method: 'POST',
+            body: formData,
+        });
+
+        const data = await response.json() as CloudinaryUploadResponse;
+
+        if (!response.ok || !data.secure_url) {
+            throw new Error(data.error?.message || 'Không thể upload ảnh bìa lên Cloudinary.');
+        }
+
+        return data.secure_url;
+    },
+    async uploadStoryCover(input: UploadStoryCoverInput) {
+        return this.uploadImageToCloudinary(input);
     },
     async getLikedStories() {
         const token = await AuthService.getToken();
