@@ -8,16 +8,45 @@ import { BarChart3, BookOpen, FileText, MessageSquare, Plus, Users } from 'lucid
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
+type RevenueItem = {
+    storyId: string;
+    totalUnlocked: number;
+    title?: string;
+    viewCount?: number;
+    likeCount?: number;
+};
+
+type TopStoryItem = {
+    storyId: string;
+    title: string;
+    viewCount: number;
+    likeCount: number;
+    totalUnlocked: number;
+};
+
+type UserGrowthItem = {
+    date: string;
+    newUsers: number;
+};
+
 type DashboardResponse = {
     totalStories: number;
     totalChapters: number;
     totalComments: number;
     totalUsers: number;
-    revenue: Array<{
-        storyId: string;
-        totalUnlocked: number;
-        title?: string;
-    }>;
+    totalViews: number;
+    totalChatMessages: number;
+    totalTopupTransactions: number;
+    totalTopupAmount: number;
+    paidUsers: number;
+    paidUserRate: number;
+    usersByDate: UserGrowthItem[];
+    revenue: RevenueItem[];
+    topStories: {
+        byViews: TopStoryItem[];
+        byLikes: TopStoryItem[];
+        byUnlocks: TopStoryItem[];
+    };
 };
 
 const statsConfig = [
@@ -25,7 +54,51 @@ const statsConfig = [
     { key: 'totalChapters', label: 'Chương', icon: FileText, color: '#4F7CFF' },
     { key: 'totalComments', label: 'Bình luận', icon: MessageSquare, color: '#4ADE80' },
     { key: 'totalUsers', label: 'Người dùng', icon: Users, color: '#F59E0B' },
+    { key: 'totalViews', label: 'Lượt đọc', icon: BookOpen, color: '#FB7185' },
+    { key: 'totalChatMessages', label: 'Tin nhắn', icon: MessageSquare, color: '#06B6D4' },
+    { key: 'totalTopupTransactions', label: 'Giao dịch nạp', icon: BarChart3, color: '#A855F7' },
+    { key: 'paidUsers', label: 'User trả phí', icon: Users, color: '#0EA5E9' },
 ] as const;
+
+type StatsKey = typeof statsConfig[number]['key'];
+
+function RankingSection({
+    title,
+    items,
+    metricKey,
+    colors,
+}: {
+    title: string;
+    items: TopStoryItem[];
+    metricKey: 'viewCount' | 'likeCount' | 'totalUnlocked';
+    colors: any;
+}) {
+    return (
+        <View
+            className="rounded-3xl border p-5 mt-4"
+            style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        >
+            <Text className="text-2xl font-bold" style={{ color: colors.text }}>
+                {title}
+            </Text>
+
+            <View className="mt-4">
+                {items.length ? items.map((item, index) => (
+                    <View key={`${metricKey}-${item.storyId}-${index}`} className="flex-row items-center justify-between py-2">
+                        <Text className="flex-1 pr-3" style={{ color: colors.text }}>
+                            {index + 1}. {item.title}
+                        </Text>
+                        <Text className="font-bold" style={{ color: colors.subtext }}>
+                            {item[metricKey]}
+                        </Text>
+                    </View>
+                )) : (
+                    <Text style={{ color: colors.subtext }}>Chưa có dữ liệu.</Text>
+                )}
+            </View>
+        </View>
+    );
+}
 
 export default function AdminDashboardScreen() {
     const { colors } = useTheme();
@@ -113,10 +186,10 @@ export default function AdminDashboardScreen() {
                 <View className="flex-row items-start justify-between mb-6">
                     <View className="flex-1 pr-4">
                         <Text className="text-4xl font-bold leading-tight" style={{ color: colors.text }}>
-                            Admin Dashboard
+                            Trang quản trị
                         </Text>
                         <Text className="text-base mt-2" style={{ color: colors.subtext }}>
-                            Quản lý nội dung nền tảng
+                            Thống kê, xếp hạng và tổng quan thanh toán
                         </Text>
                     </View>
 
@@ -127,7 +200,7 @@ export default function AdminDashboardScreen() {
                     >
                         <Plus color="#111111" size={18} />
                         <Text className="ml-2 text-[15px] font-bold" style={{ color: '#111111' }}>
-                            Thêm truyện mới
+                            Thêm truyện
                         </Text>
                     </TouchableOpacity>
                 </View>
@@ -135,7 +208,7 @@ export default function AdminDashboardScreen() {
                 <View className="flex-row flex-wrap justify-between">
                     {statsConfig.map((item) => {
                         const Icon = item.icon;
-                        const value = dashboard?.[item.key] ?? 0;
+                        const value = dashboard?.[item.key as StatsKey] ?? 0;
                         const canOpenStories = item.key === 'totalStories' || item.key === 'totalChapters';
 
                         return (
@@ -183,9 +256,67 @@ export default function AdminDashboardScreen() {
                     </TouchableOpacity>
                 </View>
 
+                <View
+                    className="rounded-3xl border p-5"
+                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                >
+                    <Text className="text-2xl font-bold" style={{ color: colors.text }}>
+                        Tổng quan thanh toán
+                    </Text>
+                    <Text className="text-sm mt-3" style={{ color: colors.subtext }}>
+                        Tổng giao dịch nạp: {dashboard?.totalTopupTransactions || 0}
+                    </Text>
+                    <Text className="text-sm mt-2" style={{ color: colors.subtext }}>
+                        Tổng tiền nạp: {dashboard?.totalTopupAmount || 0} VND
+                    </Text>
+                    <Text className="text-sm mt-2" style={{ color: colors.subtext }}>
+                        Tỉ lệ user trả phí: {dashboard?.paidUserRate || 0}%
+                    </Text>
+                </View>
+
+                <View
+                    className="rounded-3xl border p-5 mt-4"
+                    style={{ backgroundColor: colors.card, borderColor: colors.border }}
+                >
+                    <Text className="text-2xl font-bold" style={{ color: colors.text }}>
+                        User mới theo ngày
+                    </Text>
+                    <View className="mt-4">
+                        {(dashboard?.usersByDate || []).map((item) => (
+                            <View key={item.date} className="flex-row items-center justify-between py-2">
+                                <Text style={{ color: colors.subtext }}>{item.date}</Text>
+                                <Text className="font-bold" style={{ color: colors.text }}>
+                                    {item.newUsers}
+                                </Text>
+                            </View>
+                        ))}
+                    </View>
+                </View>
+
+                <RankingSection
+                    title="Top truyện theo lượt đọc"
+                    items={dashboard?.topStories?.byViews || []}
+                    metricKey="viewCount"
+                    colors={colors}
+                />
+
+                <RankingSection
+                    title="Top truyện theo lượt thích"
+                    items={dashboard?.topStories?.byLikes || []}
+                    metricKey="likeCount"
+                    colors={colors}
+                />
+
+                <RankingSection
+                    title="Top truyện theo lượt mở khóa"
+                    items={dashboard?.topStories?.byUnlocks || []}
+                    metricKey="totalUnlocked"
+                    colors={colors}
+                />
+
                 <TouchableOpacity
                     onPress={() => router.push('/admin/stories' as any)}
-                    className="rounded-3xl border p-5 mt-2"
+                    className="rounded-3xl border p-5 mt-4"
                     style={{ backgroundColor: colors.card, borderColor: colors.border }}
                 >
                     <View className="flex-row items-center mb-3">
@@ -195,7 +326,7 @@ export default function AdminDashboardScreen() {
                         </Text>
                     </View>
                     <Text className="text-sm leading-6" style={{ color: colors.subtext }}>
-                        Xem, thêm, sửa, xóa truyện và quản lý các chương.
+                        Mở khu quản lý truyện để thêm, sửa và quản lý chương.
                     </Text>
                 </TouchableOpacity>
             </ScrollView>

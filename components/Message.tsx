@@ -92,7 +92,7 @@ export default function Message({ roomId }: Props) {
     const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_URL || API_URL?.replace("/api", "");
 
     const socket = io(SOCKET_URL, {
-      transports: ["websocket"],
+      transports: ["websocket", "polling"],
       forceNew: true,
       auth: token ? { token } : undefined,
     });
@@ -109,7 +109,7 @@ export default function Message({ roomId }: Props) {
     });
 
     socket.on("connect_error", (err) => {
-      console.error("Socket connection error:", err.message);
+      console.error("Socket connection error:", err.message, "socketUrl=", SOCKET_URL);
       setIsConnected(false);
       showToast("Chat connection error. Please try again later.", "error");
     });
@@ -131,7 +131,6 @@ export default function Message({ roomId }: Props) {
 
     socketRef.current.emit("send_message", {
       content: draft.trim(),
-      userId: user._id,
       roomId,
     });
 

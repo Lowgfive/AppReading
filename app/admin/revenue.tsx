@@ -102,7 +102,7 @@ export default function AdminRevenueScreen() {
                                 Doanh thu truyện
                             </Text>
                             <Text className="text-sm mt-2 leading-6" style={{ color: colors.subtext }}>
-                                Tổng doanh thu được tính theo số lượt mở khóa chương, mặc định 50 kim cương mỗi lượt.
+                                Doanh thu được tính theo số lượt mở khóa chương, mặc định 50 kim cương cho mỗi lượt.
                             </Text>
                         </View>
                         <BarChart3 color={colors.accent} size={24} />

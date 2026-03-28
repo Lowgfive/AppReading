@@ -1,12 +1,18 @@
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import { Home, Search, BookOpen, User } from "lucide-react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
+import { useAuth } from "@/context/AuthContext";
 
 export default function TabsLayout() {
     const { colors } = useTheme();
     const { t } = useLanguage();
+    const { user, isLoading } = useAuth();
+
+    if (!isLoading && user?.role === "admin") {
+        return <Redirect href="/admin" />;
+    }
 
     return (
         <Tabs

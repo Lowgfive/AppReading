@@ -2,6 +2,7 @@ import axios from 'axios';
 import { AuthService } from './auth.service';
 
 export const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
 const CLOUDINARY_CLOUD_NAME = 'dwqmg5d1f';
 const CLOUDINARY_UPLOAD_PRESET = 'my_upload';
 const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
@@ -110,7 +111,7 @@ export const AppService = {
         const res = await axios.get(`${API_URL}/admin/dashboard`, {
             headers: { Authorization: `Bearer ${token}` }
         });
-        return res.data;
+        return res.data?.data || res.data;
     },
     async getAdminStories() {
         const token = await AuthService.getToken();
@@ -143,6 +144,13 @@ export const AppService = {
     }) {
         const token = await AuthService.getToken();
         const res = await axios.put(`${API_URL}/admin/stories/${storyId}`, payload, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return res.data;
+    },
+    async deleteAdminStory(storyId: string) {
+        const token = await AuthService.getToken();
+        const res = await axios.delete(`${API_URL}/admin/stories/${storyId}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         return res.data;

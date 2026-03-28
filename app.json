@@ -12,7 +12,6 @@
       "supportsTablet": true
     },
     "extra": {
-      "API_URl": "http://localhost:8080",
       "router": {},
       "eas": {
         "projectId": "7f929d43-fe3d-4e4e-92fe-85780a224f54"

@@ -22,6 +22,14 @@ export const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
+const getDefaultRouteByRole = (nextUser: any | null) => {
+    if (nextUser?.role === "admin") {
+        return "/admin";
+    }
+
+    return "/(tabs)/home";
+};
+
 export default function AuthProvider({ children }: PropsWithChildren) {
     const [user, setUser] = useState<any | null>(null);
     const [token, setToken] = useState<string | null>(null);
@@ -40,9 +48,9 @@ export default function AuthProvider({ children }: PropsWithChildren) {
                 const profileRes = await AuthService.getProfile();
                 if (profileRes?.user) {
                     setUser(profileRes.user);
+                    router.replace(getDefaultRouteByRole(profileRes.user) as any);
+                    return;
                 }
-
-                router.replace("/(tabs)/home");
             }
         } catch (e) {
             console.log(e);
@@ -56,7 +64,10 @@ export default function AuthProvider({ children }: PropsWithChildren) {
         const profileRes = await AuthService.getProfile();
         if (profileRes?.user) {
             setUser(profileRes.user);
+            router.replace(getDefaultRouteByRole(profileRes.user) as any);
+            return;
         }
+
         router.replace("/(tabs)/home");
     };
 

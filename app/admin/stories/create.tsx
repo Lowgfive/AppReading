@@ -8,6 +8,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Platform, ScrollView, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const GENRE_OPTIONS = [
     'Fantasy',
@@ -29,6 +30,7 @@ export default function CreateStoryScreen() {
     const { colors } = useTheme();
     const { user, isLoading } = useAuth();
     const { showToast } = useToast();
+    const insets = useSafeAreaInsets();
     const [title, setTitle] = useState('');
     const [author, setAuthor] = useState('');
     const [description, setDescription] = useState('');
@@ -144,13 +146,20 @@ export default function CreateStoryScreen() {
             <KeyboardAvoidingView
                 className="flex-1"
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 96 : 72}
             >
             <ScrollView
                 className="flex-1"
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
-                contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 18, paddingBottom: 32 }}
+                keyboardDismissMode="on-drag"
+                nestedScrollEnabled
+                automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+                contentContainerStyle={{
+                    paddingHorizontal: 16,
+                    paddingTop: 18,
+                    paddingBottom: Math.max(insets.bottom + 140, 180),
+                }}
             >
                 <Text className="text-4xl font-bold" style={{ color: colors.text }}>
                     {editingStory ? 'Cập nhật truyện' : 'Thêm truyện mới'}

@@ -1,50 +1,75 @@
-# Welcome to your Expo app 👋
+# AppReading Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Day la phan frontend cua du an AppReading, duoc xay dung bang Expo Router va React Native. Ung dung phuc vu cac luong chinh nhu dang nhap, xem truyen, doc chuong, binh luan, chat cong dong, nap Stone va khu vuc admin.
 
-## Get started
+## Yeu cau
 
-1. Install dependencies
+- Node.js 18+
+- npm 9+
+- Expo CLI hoac `npx expo`
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Cai dat
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Chay du an
 
-## Learn more
+```bash
+npm run start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Lenh nay mo Expo dev server. Tu day ban co the chon:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- `a`: mo Android emulator
+- `w`: mo web
+- quet QR de chay bang Expo Go
 
-## Join the community
+Hoac chay truc tiep:
 
-Join our community of developers creating universal apps.
+```bash
+npm run android
+npm run web
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Bien moi truong
+
+App doc API URL tu bien:
+
+```env
+EXPO_PUBLIC_API_URL=https://app-reading-backend.onrender.com/api
+```
+
+Hay dam bao backend dang chay va bien nay trung voi cong backend that su ban dang dung.
+
+## Kiem tra chat luong
+
+```bash
+npm run lint
+npm run typecheck
+```
+
+## Build
+
+App da co cau hinh EAS Build:
+
+```bash
+eas build --platform android --profile preview
+eas build --platform android --profile production
+```
+
+## Cau truc thu muc chinh
+
+- `app/`: cac man hinh theo Expo Router.
+- `components/`: UI component tai su dung.
+- `context/`: auth, theme, toast va state dung chung.
+- `services/`: cac ham goi API va xu ly du lieu.
+- `assets/`: icon, splash, hinh anh.
+
+## Luu y
+
+- Admin screen hien nam trong ung dung nay tai `app/admin`.
+- Chat realtime su dung Socket.IO.
+- Thanh toan top-up su dung luong mo phong VNPay sandbox.
+- README tong the cua toan du an nam o thu muc goc: `../README.md`.

@@ -2,7 +2,7 @@ import { AppContext } from "@/context/AppContext";
 import { useLanguage } from "@/context/LanguageContext";
 import React, { useContext } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import { BookOpen, Sun, Moon, Menu, ArrowLeft } from "lucide-react-native";
+import { BookOpen, Sun, Moon, Menu, ArrowLeft, LogOut } from "lucide-react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
@@ -17,10 +17,11 @@ export default function AppHeader({ onMenuPress }: AppHeaderProps) {
   const { t } = useLanguage();
   const router = useRouter();
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { balance } = useContext(AppContext) || { balance: 0 };
 
   const isHome = pathname === "/(tabs)/home";
+  const isAdminArea = pathname.startsWith("/admin");
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -73,6 +74,18 @@ export default function AppHeader({ onMenuPress }: AppHeaderProps) {
             <Moon color={colors.icon} size={22} />
           )}
         </TouchableOpacity>
+        {user?.role === "admin" && isAdminArea && (
+          <TouchableOpacity
+            onPress={signOut}
+            className="flex-row items-center rounded-full px-3 py-1.5"
+            style={{ backgroundColor: colors.card }}
+          >
+            <LogOut color={colors.icon} size={16} />
+            <Text className="font-bold ml-1.5 text-sm" style={{ color: colors.text }}>
+              Đăng xuất
+            </Text>
+          </TouchableOpacity>
+        )}
         {onMenuPress && (
           <TouchableOpacity onPress={onMenuPress}>
             <Menu color={colors.icon} size={24} />

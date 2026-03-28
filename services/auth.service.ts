@@ -2,6 +2,7 @@ import { Storage } from '../context/wrapper';
 import axios from 'axios';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
 const TOKEN_KEY = 'token';
 
 type ApiResponse<T> = {
