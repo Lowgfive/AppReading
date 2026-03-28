@@ -1,7 +1,8 @@
-import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
-import React from 'react';
-import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
+import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
+import React from "react";
+import { Platform } from "react-native";
+import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 
 type ThemeColors = {
     text: string;
@@ -32,9 +33,9 @@ export default function CoverImagePicker({
     selectedFile,
     currentImageUri,
     isUploading = false,
-    title = 'Ảnh',
-    emptyTitle = 'Chọn ảnh từ thiết bị',
-    helperText = 'Ảnh sẽ được upload trực tiếp lên Cloudinary trước khi gửi dữ liệu.',
+    title = "Anh",
+    emptyTitle = "Chon anh tu thiet bi",
+    helperText = "Anh se duoc upload len Cloudinary truoc khi gui du lieu.",
     aspectRatio = 2 / 3,
     onChange,
     onError,
@@ -46,21 +47,26 @@ export default function CoverImagePicker({
             return;
         }
 
-        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (!permission.granted) {
-            onError('Cần cấp quyền thư viện ảnh để chọn ảnh.');
-            return;
-        }
+        try {
+            const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (!permission.granted) {
+                onError("Can cap quyen thu vien anh de chon anh.");
+                return;
+            }
 
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.9,
-        });
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                base64: Platform.OS !== "web",
+                quality: 0.9,
+            });
 
-        if (!result.canceled) {
-            onChange(result.assets[0]);
+            if (!result.canceled) {
+                onChange(result.assets[0]);
+            }
+        } catch (error: any) {
+            onError(error?.message || "Khong the mo thu vien anh tren thiet bi nay.");
         }
     };
 
@@ -77,7 +83,7 @@ export default function CoverImagePicker({
                 style={{
                     backgroundColor: colors.background,
                     borderColor: colors.border,
-                    borderStyle: 'dashed',
+                    borderStyle: "dashed",
                     opacity: disabled || isUploading ? 0.7 : 1,
                 }}
             >
@@ -85,16 +91,16 @@ export default function CoverImagePicker({
                     <View>
                         <Image
                             source={{ uri: previewUri }}
-                            style={{ width: '100%', aspectRatio, borderRadius: 18, backgroundColor: colors.card }}
+                            style={{ width: "100%", aspectRatio, borderRadius: 18, backgroundColor: colors.card }}
                             contentFit="cover"
                         />
 
                         <Text className="text-sm font-semibold mt-3" style={{ color: colors.text }}>
-                            {selectedFile?.fileName || 'Ảnh hiện tại'}
+                            {selectedFile?.fileName || "Anh hien tai"}
                         </Text>
 
                         <Text className="text-sm mt-1" style={{ color: colors.subtext }}>
-                            Nhấn để chọn ảnh khác
+                            Nhan de chon anh khac
                         </Text>
                     </View>
                 ) : (

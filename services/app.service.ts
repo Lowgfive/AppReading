@@ -12,6 +12,7 @@ type UploadStoryCoverInput = {
     fileName?: string | null;
     mimeType?: string | null;
     file?: File;
+    base64?: string | null;
 };
 
 type CloudinaryUploadResponse = {
@@ -22,6 +23,15 @@ type CloudinaryUploadResponse = {
 };
 
 export const AppService = {
+    getNormalizedUploadMeta(input: UploadStoryCoverInput) {
+        const fallbackName = input.fileName || `story-cover-${Date.now()}.jpg`;
+        const normalizedMimeType = input.mimeType || 'image/jpeg';
+
+        return {
+            fileName: fallbackName,
+            mimeType: normalizedMimeType,
+        };
+    },
     async getHomeStories() {
         const res = await axios.get(`${API_URL}/stories/home`);
         return res.data;
@@ -157,16 +167,19 @@ export const AppService = {
     },
     async uploadImageToCloudinary(input: UploadStoryCoverInput) {
         const formData = new FormData();
+        const { fileName, mimeType } = this.getNormalizedUploadMeta(input);
 
         formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
         if (input.file) {
             formData.append('file', input.file);
+        } else if (input.base64) {
+            formData.append('file', `data:${mimeType};base64,${input.base64}`);
         } else {
             formData.append('file', {
                 uri: input.uri,
-                name: input.fileName || `story-cover-${Date.now()}.jpg`,
-                type: input.mimeType || 'image/jpeg',
+                name: fileName,
+                type: mimeType,
             } as any);
         }
 
@@ -232,7 +245,7 @@ export const AppService = {
         }, {
             headers: { Authorization: `Bearer ${token}` }
         });
-        return res.data;
+        return res.data?.data || res.data;
     },
     async unlockChapter(storyId: string, chapterId: string) {
         const token = await AuthService.getToken();

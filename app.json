@@ -46,6 +46,13 @@
           }
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Cho phep AppReading truy cap thu vien anh de chon va tai anh len.",
+          "cameraPermission": "Cho phep AppReading truy cap camera de chup anh."
+        }
+      ],
       "expo-font"
     ],
     "experiments": {

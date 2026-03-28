@@ -86,6 +86,7 @@ export default function CreateStoryScreen() {
                     fileName: selectedFile.fileName,
                     mimeType: selectedFile.mimeType,
                     file: Platform.OS === 'web' ? selectedFile.file : undefined,
+                    base64: Platform.OS !== 'web' ? selectedFile.base64 : undefined,
                 });
             }
 

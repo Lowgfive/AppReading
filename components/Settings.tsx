@@ -89,7 +89,7 @@ export default function Settings({ profileData, setProfileData, handleSignOut, o
                 showToast(res.message || t("settings.profileUpdateFailed"), "error");
             }
         } catch (error: any) {
-            showToast(error?.response?.data?.message || t("settings.genericError"), "error");
+            showToast(error?.response?.data?.message || error?.message || t("settings.genericError"), "error");
         } finally {
             setIsSaving(false);
         }
@@ -106,6 +106,7 @@ export default function Settings({ profileData, setProfileData, handleSignOut, o
                 fileName: avatarFile.fileName,
                 mimeType: avatarFile.mimeType,
                 file: Platform.OS === 'web' ? avatarFile.file : undefined,
+                base64: Platform.OS !== 'web' ? avatarFile.base64 : undefined,
             });
 
             const res = await AuthService.updateAvatar(avatarUrl);
@@ -118,7 +119,8 @@ export default function Settings({ profileData, setProfileData, handleSignOut, o
                 showToast(res.message || t("settings.profileUpdateFailed"), "error");
             }
         } catch (error: any) {
-            showToast(error?.response?.data?.message || t("settings.genericError"), "error");
+            console.error("Avatar update failed:", error);
+            showToast(error?.response?.data?.message || error?.message || t("settings.genericError"), "error");
         } finally {
             setIsUploadingAvatar(false);
         }
@@ -138,7 +140,7 @@ export default function Settings({ profileData, setProfileData, handleSignOut, o
                 showToast(res.message || t("settings.profileUpdateFailed"), "error");
             }
         } catch (error: any) {
-            showToast(error?.response?.data?.message || t("settings.genericError"), "error");
+            showToast(error?.response?.data?.message || error?.message || t("settings.genericError"), "error");
         } finally {
             setIsSaving(false);
         }
